@@ -25,6 +25,7 @@
 * Last updated: 2023-12-14
 */
 
+use log::warn;
 use std::fmt;
 
 ///
@@ -36,12 +37,13 @@ impl fmt::Display for WidthError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
-            "Invalid target pad width for the provided string length."
+            "invalid target pad width for the provided string length."
         )
     }
 }
 
 ///
+#[derive(Debug)]
 pub enum Alignment {
     Left,
     Right,
@@ -49,18 +51,23 @@ pub enum Alignment {
 }
 
 ///
-pub fn whitespace(string: &str, width: usize, mode: Alignment) -> String {
-    pad(string, width, mode, ' ')
+pub fn whitespace(string: &str, width: usize, mode: Alignment) -> Result<String, WidthError> {
+    pad(string, width, &mode, ' ')
 }
 
 ///
-pub fn zeros(string: &str, width: usize, mode: Alignment) -> String {
-    pad(string, width, mode, '0')
+pub fn zeros(string: &str, width: usize, mode: Alignment) -> Result<String, WidthError> {
+    pad(string, width, &mode, '0')
 }
 
 ///
-pub fn pad_into_bytes(string: &str, width: usize, mode: Alignment, pad_char: char) -> Vec<u8> {
-    pad(string, width, mode, pad_char).into_bytes()
+pub fn pad_into_bytes(
+    string: &str,
+    width: usize,
+    mode: Alignment,
+    pad_char: char,
+) -> Result<Vec<u8>, WidthError> {
+    Ok(pad(string, width, &mode, pad_char)?.into_bytes())
 }
 
 ///
@@ -71,22 +78,44 @@ pub fn pad_and_push_to_buffer(
     pad_char: char,
     buffer: &mut Vec<u8>,
 ) {
-    buffer.extend_from_slice(pad(string, width, mode, pad_char).as_bytes());
+    let padded: String = match pad(string, width, &mode, pad_char) {
+        Ok(s) => s,
+        Err(e) => {
+            warn!("could not pad `{}` due to: {}", string, e);
+            warn!("will slice the string to fit in the buffer, expect some data to be missing...");
+            slice_to_fit(string, width, &mode).to_string()
+        }
+    };
+
+    buffer.extend_from_slice(padded.as_bytes());
 }
 
 ///
-/// Panics
-/// Iff the target pad width is less than the provided string length.
-fn pad(string: &str, width: usize, mode: Alignment, pad_char: char) -> String {
+/// # Panic
+/// Iff the [`pad`] function returns a [`WidthError`], at which point the string can't be padded.
+pub fn try_pad_and_push_to_buffer(
+    string: &str,
+    width: usize,
+    mode: Alignment,
+    pad_char: char,
+    buffer: &mut Vec<u8>,
+) {
+    buffer.extend_from_slice(pad(string, width, &mode, pad_char).unwrap().as_bytes());
+}
+
+///
+/// # Error
+/// Iff the target padding width is less than the length of the string to pad.
+fn pad(string: &str, width: usize, mode: &Alignment, pad_char: char) -> Result<String, WidthError> {
     if width < string.len() {
-        panic!("Invalid target pad width for the provide string length.")
+        return Err(WidthError);
     }
 
     let mut output = String::with_capacity(width);
     let diff: usize = width - string.len();
 
     if diff == 0 {
-        return string.to_string();
+        return Ok(string.to_string());
     }
 
     let (lpad, rpad) = match mode {
@@ -99,7 +128,18 @@ fn pad(string: &str, width: usize, mode: Alignment, pad_char: char) -> String {
     output.push_str(string);
     (0..rpad).for_each(|_| output.push(pad_char));
 
-    output
+    Ok(output)
+}
+
+///
+fn slice_to_fit<'a>(string: &'a str, width: usize, mode: &'a Alignment) -> &'a str {
+    match mode {
+        Alignment::Left => &string[0..width],
+        Alignment::Right => &string[(string.len() - width)..],
+        Alignment::Center => {
+            &string[(string.len() / 2 - width / 2)..(string.len() / 2 + width / 2)]
+        }
+    }
 }
 
 #[cfg(test)]
@@ -108,8 +148,71 @@ mod tests {
 
     #[test]
     #[should_panic]
+    fn pad_unwrap_on_error() {
+        let mut buffer: Vec<u8> = Vec::with_capacity(193838);
+        try_pad_and_push_to_buffer(
+            "the length of this string is much larger than the target padding width",
+            10,
+            Alignment::Right,
+            ' ',
+            &mut buffer,
+        );
+    }
+
+    #[test]
+    fn pad_and_slice_to_fit_left_align() {
+        let mut buffer: Vec<u8> = Vec::with_capacity(193838);
+        pad_and_push_to_buffer(
+            "the length of this string is much larger than the target padding width",
+            10,
+            Alignment::Left,
+            ' ',
+            &mut buffer,
+        );
+
+        assert_eq!("the length".as_bytes(), buffer);
+    }
+
+    #[test]
+    fn pad_and_slice_to_fit_right_align() {
+        let mut buffer: Vec<u8> = Vec::with_capacity(193838);
+        pad_and_push_to_buffer(
+            "the length of this string is much larger than the target padding width",
+            10,
+            Alignment::Right,
+            ' ',
+            &mut buffer,
+        );
+
+        assert_eq!("ding width".as_bytes(), buffer);
+    }
+
+    #[test]
+    fn pad_and_slice_to_fit_center_align_even() {
+        let mut buffer: Vec<u8> = Vec::with_capacity(1024);
+        pad_and_push_to_buffer("hejjag", 2, Alignment::Center, ' ', &mut buffer);
+
+        assert_eq!("jj".as_bytes(), buffer);
+    }
+
+    #[test]
+    fn pad_and_slice_to_fit_center_align_uneven() {
+        let mut buffer: Vec<u8> = Vec::with_capacity(1024);
+        pad_and_push_to_buffer(
+            "a little bit trickier center align!",
+            10,
+            Alignment::Center,
+            ' ',
+            &mut buffer,
+        );
+
+        assert_eq!(" trickier ".as_bytes(), buffer);
+    }
+
+    #[test]
+    #[should_panic]
     fn pad_should_panic() {
-        let _ = whitespace("lol hahahah xd test", 15, Alignment::Center);
+        let _ = whitespace("lol hahahah xd test", 15, Alignment::Center).unwrap();
     }
 
     #[test]
@@ -117,7 +220,10 @@ mod tests {
         let width: usize = 30;
         let bytes = pad_into_bytes("this is cool", width, Alignment::Right, ' ');
 
-        assert_eq!(format!("{:>width$}", "this is cool").into_bytes(), bytes,);
+        assert_eq!(
+            format!("{:>width$}", "this is cool").into_bytes(),
+            bytes.unwrap()
+        );
     }
 
     #[test]
@@ -144,7 +250,7 @@ mod tests {
         let width: usize = 30;
         let pad = whitespace("this is cool", width, Alignment::Left);
 
-        assert_eq!(format!("{:<width$}", "this is cool"), pad);
+        assert_eq!(format!("{:<width$}", "this is cool"), pad.unwrap());
     }
 
     #[test]
@@ -152,7 +258,7 @@ mod tests {
         let width: usize = 30;
         let pad = whitespace("this is cool", width, Alignment::Right);
 
-        assert_eq!(format!("{:>width$}", "this is cool"), pad);
+        assert_eq!(format!("{:>width$}", "this is cool"), pad.unwrap());
     }
 
     #[test]
@@ -160,7 +266,7 @@ mod tests {
         let width: usize = 30;
         let pad = whitespace("this is cool", width, Alignment::Center);
 
-        assert_eq!(format!("{:^width$}", "this is cool"), pad);
+        assert_eq!(format!("{:^width$}", "this is cool"), pad.unwrap());
     }
 
     #[test]
@@ -168,7 +274,7 @@ mod tests {
         let width: usize = 30;
         let pad = zeros("this is cool", width, Alignment::Left);
 
-        assert_eq!(format!("{:0<width$}", "this is cool"), pad);
+        assert_eq!(format!("{:0<width$}", "this is cool"), pad.unwrap());
     }
 
     #[test]
@@ -176,7 +282,7 @@ mod tests {
         let width: usize = 30;
         let pad = zeros("this is cool", width, Alignment::Right);
 
-        assert_eq!(format!("{:0>width$}", "this is cool"), pad);
+        assert_eq!(format!("{:0>width$}", "this is cool"), pad.unwrap());
     }
 
     #[test]
@@ -184,7 +290,7 @@ mod tests {
         let width: usize = 30;
         let pad = zeros("this is cool", width, Alignment::Center);
 
-        assert_eq!(format!("{:0^width$}", "this is cool"), pad);
+        assert_eq!(format!("{:0^width$}", "this is cool"), pad.unwrap());
     }
 
     #[test]
@@ -192,6 +298,6 @@ mod tests {
         let width: usize = 100_000_000;
         let pad = zeros("this is cool", width, Alignment::Center);
 
-        assert_eq!(format!("{:0^width$}", "this is cool"), pad);
+        assert_eq!(format!("{:0^width$}", "this is cool"), pad.unwrap());
     }
 }
