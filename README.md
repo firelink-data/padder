@@ -12,7 +12,6 @@
 
 *String formatting and padding, done right, the rusty way.*
 
-
 </div>
 
 ## 🔎 Overview
@@ -29,7 +28,7 @@ $ cargo add padder
 Alternatively, you can build from source by cloning this repo and compiling using Cargo and then linking the library to your project.
 ```
 $ git clone https://github.com/firelink-data/padder.git
-$ cd pader
+$ cd padder
 $ cargo build --release
 ```
 
