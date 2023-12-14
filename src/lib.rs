@@ -34,7 +34,10 @@ pub struct WidthError;
 ///
 impl fmt::Display for WidthError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Invalid target pad width for the provided string length.")
+        write!(
+            f,
+            "Invalid target pad width for the provided string length."
+        )
     }
 }
 
@@ -46,30 +49,17 @@ pub enum Alignment {
 }
 
 ///
-pub fn whitespace(
-    string: &str,
-    width: usize,
-    mode: Alignment,
-) -> String {
+pub fn whitespace(string: &str, width: usize, mode: Alignment) -> String {
     pad(string, width, mode, ' ')
 }
 
 ///
-pub fn zeros(
-    string: &str,
-    width: usize,
-    mode: Alignment,
-) -> String {
+pub fn zeros(string: &str, width: usize, mode: Alignment) -> String {
     pad(string, width, mode, '0')
 }
 
 ///
-pub fn pad_into_bytes(
-    string: &str,
-    width: usize,
-    mode: Alignment,
-    pad_char: char,
-) -> Vec<u8> {
+pub fn pad_into_bytes(string: &str, width: usize, mode: Alignment, pad_char: char) -> Vec<u8> {
     pad(string, width, mode, pad_char).into_bytes()
 }
 
@@ -81,27 +71,23 @@ pub fn pad_and_push_to_buffer(
     pad_char: char,
     buffer: &mut Vec<u8>,
 ) {
-    buffer.extend_from_slice(
-        pad(string, width, mode, pad_char).as_bytes()
-    );
+    buffer.extend_from_slice(pad(string, width, mode, pad_char).as_bytes());
 }
 
 ///
 /// Panics
 /// Iff the target pad width is less than the provided string length.
-fn pad(
-    string: &str,
-    width: usize,
-    mode: Alignment,
-    pad_char: char,
-) -> String {
-
-    if width < string.len() { panic!("Invalid target pad width for the provide string length.") }
+fn pad(string: &str, width: usize, mode: Alignment, pad_char: char) -> String {
+    if width < string.len() {
+        panic!("Invalid target pad width for the provide string length.")
+    }
 
     let mut output = String::with_capacity(width);
     let diff: usize = width - string.len();
 
-    if diff == 0 { return string.to_string(); }
+    if diff == 0 {
+        return string.to_string();
+    }
 
     let (lpad, rpad) = match mode {
         Alignment::Left => (0, diff),
@@ -131,19 +117,23 @@ mod tests {
         let width: usize = 30;
         let bytes = pad_into_bytes("this is cool", width, Alignment::Right, ' ');
 
-        assert_eq!(
-            format!("{:>width$}", "this is cool").into_bytes(),
-            bytes,
-        );
+        assert_eq!(format!("{:>width$}", "this is cool").into_bytes(), bytes,);
     }
 
     #[test]
     fn pad_zeros_left_align_push_to_buffer() {
         let width: usize = 128;
-        let expected: Vec<u8> = format!("{:0<width$}", "testing buffer reuse smart memory").into_bytes();
+        let expected: Vec<u8> =
+            format!("{:0<width$}", "testing buffer reuse smart memory").into_bytes();
 
         let mut buffer: Vec<u8> = Vec::with_capacity(1024 * 1024);
-        pad_and_push_to_buffer("testing buffer reuse smart memory", width, Alignment::Left, '0', &mut buffer);
+        pad_and_push_to_buffer(
+            "testing buffer reuse smart memory",
+            width,
+            Alignment::Left,
+            '0',
+            &mut buffer,
+        );
 
         assert_eq!(expected.len(), buffer.len());
         assert_eq!(expected, buffer);
@@ -154,10 +144,7 @@ mod tests {
         let width: usize = 30;
         let pad = whitespace("this is cool", width, Alignment::Left);
 
-        assert_eq!(
-            format!("{:<width$}", "this is cool"),
-            pad
-        );
+        assert_eq!(format!("{:<width$}", "this is cool"), pad);
     }
 
     #[test]
@@ -165,10 +152,7 @@ mod tests {
         let width: usize = 30;
         let pad = whitespace("this is cool", width, Alignment::Right);
 
-        assert_eq!(
-            format!("{:>width$}", "this is cool"),
-            pad
-        );
+        assert_eq!(format!("{:>width$}", "this is cool"), pad);
     }
 
     #[test]
@@ -176,10 +160,7 @@ mod tests {
         let width: usize = 30;
         let pad = whitespace("this is cool", width, Alignment::Center);
 
-        assert_eq!(
-            format!("{:^width$}", "this is cool"),
-            pad
-        );
+        assert_eq!(format!("{:^width$}", "this is cool"), pad);
     }
 
     #[test]
@@ -187,10 +168,7 @@ mod tests {
         let width: usize = 30;
         let pad = zeros("this is cool", width, Alignment::Left);
 
-        assert_eq!(
-            format!("{:0<width$}", "this is cool"),
-            pad
-        );
+        assert_eq!(format!("{:0<width$}", "this is cool"), pad);
     }
 
     #[test]
@@ -198,10 +176,7 @@ mod tests {
         let width: usize = 30;
         let pad = zeros("this is cool", width, Alignment::Right);
 
-        assert_eq!(
-            format!("{:0>width$}", "this is cool"),
-            pad
-        );
+        assert_eq!(format!("{:0>width$}", "this is cool"), pad);
     }
 
     #[test]
@@ -209,10 +184,7 @@ mod tests {
         let width: usize = 30;
         let pad = zeros("this is cool", width, Alignment::Center);
 
-        assert_eq!(
-            format!("{:0^width$}", "this is cool"),
-            pad
-        );
+        assert_eq!(format!("{:0^width$}", "this is cool"), pad);
     }
 
     #[test]
@@ -220,9 +192,6 @@ mod tests {
         let width: usize = 100_000_000;
         let pad = zeros("this is cool", width, Alignment::Center);
 
-        assert_eq!(
-            format!("{:0^width$}", "this is cool"),
-            pad
-        );
+        assert_eq!(format!("{:0^width$}", "this is cool"), pad);
     }
 }
