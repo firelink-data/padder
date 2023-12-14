@@ -1,8 +1,8 @@
 [package]
 name = "padder"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
-description = "String formatting and padding, done right, the rusty way."
+description = "Efficient data formatting and padding, done right, the rusty way."
 authors = [
     "Wilhelm Ågren <wilhelmagren98@gmail.com>",
 ]
