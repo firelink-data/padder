@@ -2,7 +2,7 @@
 name = "padder"
 version = "0.1.0"
 edition = "2021"
-description = "String formatting done right."
+description = "String formatting and padding, done right, the rusty way."
 authors = [
     "Wilhelm Ågren <wilhelmagren98@gmail.com>",
 ]
