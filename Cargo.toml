@@ -1,0 +1,36 @@
+[package]
+name = "padder"
+version = "0.1.0"
+edition = "2021"
+description = "String formatting done right."
+authors = [
+    "Wilhelm Ågren <wilhelmagren98@gmail.com>",
+]
+
+readme = "README.md"
+license-file = "LICENSE"
+homepage = "https://github.com/firelink-data/padder"
+repository = "https://github.com/firelink-data/padder"
+
+include = [
+    "**/*.rs",
+    "Cargo.toml",
+    "LICENSE",
+    "README.md",
+]
+
+[lib]
+name = "padder"
+path = "src/lib.rs"
+test = true
+bench = true
+crate-type = [ "lib" ]
+
+[dependencies]
+
+[dev-dependencies]
+criterion = "0.5.1"
+
+[[bench]]
+name = "bench_main"
+harness = false
