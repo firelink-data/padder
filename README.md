@@ -10,7 +10,7 @@
 [![CI](https://github.com/firelink-data/padder/actions/workflows/ci.yml/badge.svg)](https://github.com/firelink-data/padder/actions/workflows/ci.yml)
 [![Tests](https://github.com/firelink-data/padder/actions/workflows/tests.yml/badge.svg)](https://github.com/firelink-data/padder/actions/workflows/tests.yml)
 
-*String formatting and padding, done right, the rusty way.*
+⚡️*Highly efficient data and string formatting, done right, the rusty way.*
 
 </div>
 
