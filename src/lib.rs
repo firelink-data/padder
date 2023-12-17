@@ -22,11 +22,105 @@
 * SOFTWARE.
 *
 * File created: 2023-12-14
-* Last updated: 2023-12-14
+* Last updated: 2023-12-17
 */
 
 use log::warn;
 use std::fmt;
+
+///
+pub trait Paddable {}
+impl Paddable for char {}
+impl Paddable for u8 {}
+
+
+///
+pub trait Padder {
+    type Output;
+
+    fn pad(&self, width: usize, pad_symbol: &Symbol, mode: &Alignment) -> Self::Output;
+    fn pad_and_push_to_buffer(
+        &self,
+        width: usize,
+        pad_symbol: &Symbol,
+        mode: &Alignment,
+        buffer: &mut Vec<u8>,
+    );
+}
+
+///
+impl Padder for str {
+    type Output = String;
+
+    ///
+    fn pad(&self, width: usize, pad_symbol: &Symbol, mode: &Alignment) -> Self::Output {
+        if width < self.len() {
+            return slice_to_fit(self, width, mode).to_string();
+        }
+
+        let mut output = String::with_capacity(width);
+        let diff: usize = width - self.len();
+
+        if diff == 0 {
+            return self.to_string();
+        }
+
+        let (lpad, rpad) = match mode {
+            Alignment::Left => (0, diff),
+            Alignment::Right => (diff, 0),
+            Alignment::Center => (diff / 2, diff - diff / 2),
+        };
+
+        let pad_char = match pad_symbol {
+            Symbol::Whitespace => ' ',
+            Symbol::Zero => '0',
+        };
+
+        (0..lpad).for_each(|_| output.push(pad_char));
+        output.push_str(self);
+        (0..rpad).for_each(|_| output.push(pad_char));
+
+        output
+    }
+
+    ///
+    fn pad_and_push_to_buffer(
+            &self,
+            width: usize,
+            pad_symbol: &Symbol,
+            mode: &Alignment,
+            buffer: &mut Vec<u8>,
+        ) {
+       let padded: String = self.pad(width, pad_symbol, mode);
+       buffer.extend_from_slice(padded.as_bytes());
+    }
+}
+
+///
+impl<T: Paddable> Padder for Vec<T> {
+    type Output = Vec<T>;
+
+    ///
+    fn pad(&self, width: usize, pad_symbol: &Symbol, mode: &Alignment) -> Self::Output {
+        todo!()
+    }
+
+    ///
+    fn pad_and_push_to_buffer(
+            &self,
+            width: usize,
+            pad_symbol: &Symbol,
+            mode: &Alignment,
+            buffer: &mut Vec<u8>,
+        ) {
+        todo!()
+    }
+}
+
+pub enum Symbol {
+    Whitespace,
+    Zero,
+}
 
 ///
 #[derive(Debug, Clone)]
