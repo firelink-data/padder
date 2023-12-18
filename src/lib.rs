@@ -22,39 +22,99 @@
 * SOFTWARE.
 *
 * File created: 2023-12-14
-* Last updated: 2023-12-17
+* Last updated: 2023-12-18
 */
 
 use log::warn;
 use std::fmt;
 
 ///
-pub trait Paddable {}
-impl Paddable for char {}
-impl Paddable for u8 {}
-
+#[derive(Debug, Clone)]
+pub struct WidthError;
 
 ///
-pub trait Padder {
+impl fmt::Display for WidthError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "invalid target pad width for the provided string length"
+        )
+    }
+}
+
+///
+#[derive(Debug, Clone, Copy)]
+pub enum Alignment {
+    Left,
+    Right,
+    Center,
+}
+
+pub trait Formattable {}
+impl Formattable for char {}
+impl Formattable for u8 {}
+
+pub trait PadResult {}
+impl PadResult for String {}
+impl<T: Formattable> PadResult for Vec<T> {}
+
+#[derive(Debug, Clone, Copy)]
+pub struct Symbol<T: Formattable> {
+    item: T,
+}
+
+impl<T> Symbol<T> 
+where T: Formattable
+{
+    pub fn new(t: T) -> Self {
+        Self { item: t }
+    }
+
+    pub fn item(self) -> T {
+        self.item
+    }
+}
+
+impl<T> From<Symbol<T>> for char
+where T: Formattable, char: From<T>
+{
+    fn from(s: Symbol<T>) -> Self {
+        s.item.into()
+    }
+}
+
+impl<T> From<Symbol<T>> for u8
+where T: Formattable, u8: From<T>
+{
+    fn from(s: Symbol<T>) -> Self {
+        s.item.into()
+    }
+}
+
+///
+pub trait Padder<T: Formattable> {
     type Output;
 
-    fn pad(&self, width: usize, pad_symbol: &Symbol, mode: &Alignment) -> Self::Output;
+    fn pad(&self, width: usize, symbol: Symbol<T>, mode: &Alignment) -> Self::Output;
     fn pad_and_push_to_buffer(
         &self,
         width: usize,
-        pad_symbol: &Symbol,
+        symbol: Symbol<T>,
         mode: &Alignment,
-        buffer: &mut Vec<u8>,
+        buffer: &mut Self::Output,
     );
 }
 
 ///
-impl Padder for str {
+impl<T: Formattable> Padder<T> for str
+where char: From<T>
+{
     type Output = String;
 
     ///
-    fn pad(&self, width: usize, pad_symbol: &Symbol, mode: &Alignment) -> Self::Output {
+    fn pad(&self, width: usize, symbol: Symbol<T>, mode: &Alignment) -> Self::Output {
         if width < self.len() {
+            warn!("{}, will slice the data to fit to the target width...", WidthError);
             return slice_to_fit(self, width, mode).to_string();
         }
 
@@ -71,10 +131,7 @@ impl Padder for str {
             Alignment::Center => (diff / 2, diff - diff / 2),
         };
 
-        let pad_char = match pad_symbol {
-            Symbol::Whitespace => ' ',
-            Symbol::Zero => '0',
-        };
+        let pad_char: char = symbol.item().into();
 
         (0..lpad).for_each(|_| output.push(pad_char));
         output.push_str(self);
@@ -87,22 +144,57 @@ impl Padder for str {
     fn pad_and_push_to_buffer(
             &self,
             width: usize,
-            pad_symbol: &Symbol,
+            symbol: Symbol<T>,
             mode: &Alignment,
-            buffer: &mut Vec<u8>,
+            buffer: &mut Self::Output,
         ) {
-       let padded: String = self.pad(width, pad_symbol, mode);
-       buffer.extend_from_slice(padded.as_bytes());
+       let padded: String = self.pad(width, symbol, mode);
+       buffer.push_str(&padded);
     }
 }
 
+pub fn xdwhitespace<T, P>(buffer: T, width: usize, mode: &Alignment) -> P 
+where T: Padder<T + <Output = P>> + Formattable, P: PadResult
+{
+    buffer.pad(width, Symbol::new(' '), mode)
+}
+pub fn xdzero<T, P>(buffer: T, width: usize, mode: &Alignment)
+where T: Padder<T> + Formattable, P: PadResult
+{
+    buffer.pad(width, Symbol::new('0'), mode)
+}
+
+/*
 ///
-impl<T: Paddable> Padder for Vec<T> {
+impl<T: Formattable> Padder for Vec<T> {
     type Output = Vec<T>;
 
-    ///
-    fn pad(&self, width: usize, pad_symbol: &Symbol, mode: &Alignment) -> Self::Output {
-        todo!()
+    /// Allocates memory for a new Vec<T> with capacity width, consumes `self`.
+    fn pad(&self, width: usize, pad_symbol: T, mode: &Alignment) -> Self::Output {
+        if width < self.len() {
+            warn!("{}, will slice the data to fit to the target width...", WidthError);
+            return slice_to_fit(self, width, mode)
+        }
+
+        let mut output: Vec<T> = Vec::with_capacity(width);
+        let diff: usize = width - self.len();
+
+        if diff == 0 {
+            return self;
+        }
+
+        let (lpad, rpad) = match mode {
+            Alignment::Left => (0, diff),
+            Alignment::Right => (diff, 0),
+            Alignment::Center => (diff / 2, diff - diff / 2),
+        };
+
+        (0..lpad).for_each(|_| output.push(pad_symbol));
+        output.extend_from_slice(self.as_slice());
+        (0..rpad).for_each(|_| output.push(pad_symbol));
+
+        output
+
     }
 
     ///
@@ -111,38 +203,12 @@ impl<T: Paddable> Padder for Vec<T> {
             width: usize,
             pad_symbol: &Symbol,
             mode: &Alignment,
-            buffer: &mut Vec<u8>,
+            buffer: &mut Self::Output,
         ) {
         todo!()
     }
 }
-
-pub enum Symbol {
-    Whitespace,
-    Zero,
-}
-
-///
-#[derive(Debug, Clone)]
-pub struct WidthError;
-
-///
-impl fmt::Display for WidthError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            f,
-            "invalid target pad width for the provided string length."
-        )
-    }
-}
-
-///
-#[derive(Debug)]
-pub enum Alignment {
-    Left,
-    Right,
-    Center,
-}
+*/
 
 ///
 pub fn whitespace(string: &str, width: usize, mode: Alignment) -> Result<String, WidthError> {
