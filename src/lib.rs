@@ -47,6 +47,7 @@ pub enum Alignment {
 pub enum Symbol {
     Whitespace,
     Zero,
+    Hyphen,
 }
 
 ///
@@ -55,6 +56,7 @@ impl From<Symbol> for char {
         match symbol {
             Symbol::Whitespace => ' ',
             Symbol::Zero => '0',
+            Symbol::Hyphen => '-',
         }
     }
 }
@@ -137,30 +139,44 @@ mod tests {
     use super::*;
 
     #[test]
-    fn pad_left_align_whitespace() {
+    fn pad_str_left_align_whitespace() {
         let output = "hej".pad(6, Alignment::Left, Symbol::Whitespace);
         let expected = "hej   ".to_string();
         assert_eq!(expected, output);
     }
 
     #[test]
-    fn pad_right_align_whitespace() {
+    fn pad_str_right_align_whitespace() {
         let output = "hejjj".pad(9, Alignment::Right, Symbol::Whitespace);
         let expected = "    hejjj".to_string();
         assert_eq!(expected, output);
     }
 
     #[test]
-    fn pad_center_align_whitespace() {
+    fn pad_str_center_align_whitespace() {
         let output = "hejjj".pad(9, Alignment::Center, Symbol::Whitespace);
         let expected = "  hejjj  ".to_string();
         assert_eq!(expected, output);
     }
 
     #[test]
-    fn pad_center_align_whitespace_even() {
+    fn pad_str_center_align_whitespace_even() {
         let output = "hejjj".pad(10, Alignment::Center, Symbol::Whitespace);
         let expected = "  hejjj   ".to_string();
+        assert_eq!(expected, output);
+    }
+
+    #[test]
+    fn pad_str_left_align_zero() {
+        let output = "hej178".pad(12, Alignment::Left, Symbol::Zero);
+        let expected = "hej178000000".to_string();
+        assert_eq!(expected, output);
+    }
+
+    #[test]
+    fn pad_str_right_align_zero() {
+        let output = "9184".pad(8, Alignment::Right, Symbol::Zero);
+        let expected = "00009184".to_string();
         assert_eq!(expected, output);
     }
 }
