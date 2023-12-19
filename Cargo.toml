@@ -1,8 +1,8 @@
 [package]
 name = "padder"
-version = "0.1.1"
+version = "1.0.0"
 edition = "2021"
-description = "Efficient data formatting and padding, done right, the rusty way."
+description = "Highly efficient data and string formatting library for Rust."
 authors = [
     "Wilhelm Ågren <wilhelmagren98@gmail.com>",
 ]
