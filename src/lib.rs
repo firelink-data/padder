@@ -25,6 +25,7 @@
 * Last updated: 2023-12-19
 */
 
+///
 /// Highly efficient data and string formatting library for Rust.
 ///
 /// Pad and format string slices and generic vectors efficiently with minimal memory
@@ -41,9 +42,11 @@
 /// +---+---+---+        +---+---+---+---+---+---+
 ///
 /// ```
+/// use padder::*;
 /// let output: String = "abc".pad(6, Alignment::Left, Symbol::Whitespace);
 /// ```
 ///
+
 use std::clone;
 
 /// Exhaustive enum for the alternative ways to pad and format data.
