@@ -19,7 +19,11 @@ pub fn pad_whitespace_1000_leftalign(c: &mut Criterion) {
     let width: usize = 1000;
     c.bench_function("pad ws 1000 la", |b| {
         b.iter(|| {
-            black_box("Undercity is a cool capital...".pad(width, Alignment::Left, Symbol::Whitespace))
+            black_box("Undercity is a cool capital...".pad(
+                width,
+                Alignment::Left,
+                Symbol::Whitespace,
+            ))
         })
     });
 }
@@ -28,13 +32,11 @@ pub fn pad_whitespace_10000_leftalign(c: &mut Criterion) {
     let width: usize = 10000;
     c.bench_function("pad ws 10000 la", |b| {
         b.iter(|| {
-            black_box(
-                "¤)(åäöåa this is a very long string... xd".pad(
-                    width,
-                    Alignment::Left,
-                    Symbol::Whitespace,
-                )
-            )
+            black_box("¤)(åäöåa this is a very long string... xd".pad(
+                width,
+                Alignment::Left,
+                Symbol::Whitespace,
+            ))
         })
     });
 }
