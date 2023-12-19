@@ -25,6 +25,13 @@
 * Last updated: 2023-12-19
 */
 
+/// Highly efficient data and string formatting library for Rust.
+///
+/// Pad and format string slices and generic vectors efficiently with minimal memory
+/// allocation. This crate has guaranteed performance improvements over the standard
+/// library [`format!`] macro.
+///
+/// # Examples
 ///
 /// Given the below string slice and target pad width 6, with [`Alignment::Left`] and
 /// [`PadSymbol::Whitespace`], the resulting output String can be seen on the right:
@@ -33,7 +40,10 @@
 /// | a | b | c |   -->  | a | b | c |   |   |   |
 /// +---+---+---+        +---+---+---+---+---+---+
 ///
-
+/// ```
+/// let output: String = "abc".pad(6, Alignment::Left, Symbol::Whitespace);
+/// ```
+///
 use std::clone;
 
 /// Exhaustive enum for the alternative ways to pad and format data.
@@ -100,13 +110,35 @@ impl From<Symbol> for &[u8] {
     }
 }
 
+/// A trait providing functions to perform padding and formatting on the implemented type.
 ///
+/// The main [`Source::pad`] API for this trait requires the caller to provide three knowns:
+///     1. The target width as a usize.
+///     2. The padding alignment mode, see [`Alignment`] for allowed modes.
+///     3. The symbol to pad with, see [`Symbol`] for allowed symbols.
+///
+/// The trait is bound only for types T that implement the [`From<Symbol>`] trait. This is
+/// to guarantee that the datatype that the caller wants to pad with can be converted from
+/// the [`Symbol`] enum type to the corresponding type.
+///
+/// Utilizing this trait has guaranteed performance improvements over the [`format!`] macro
+/// in the standard library, mainly due to only allocating memory on the heap once.
 pub trait Source {
     type Buffer;
     type Output;
 
-    fn slice_to_fit(&self, width: usize, mode: Alignment) -> Self::Output;
+    /// Pad the source, the caller type, to fit the target width.
+    ///
     fn pad(&self, width: usize, mode: Alignment, symbol: Symbol) -> Self::Output;
+
+    /// Slice the source to fit the target width and return it as the defined output type.
+    ///
+    /// This function is called whenever a call to [`pad`] is attempted but the
+    /// length of the source is less than the width. This truncates the source
+    /// and may lead to data loss. This is logged to stdout whenever it occurs.
+    fn slice_to_fit(&self, width: usize, mode: Alignment) -> Self::Output;
+
+    ///
     fn pad_and_push_to_buffer(
         &self,
         width: usize,
@@ -116,7 +148,7 @@ pub trait Source {
     );
 }
 
-///
+/// Trait implementation for a string slice.
 impl Source for &str
 where
     char: From<Symbol>,
@@ -173,7 +205,7 @@ where
     }
 }
 
-///
+/// Trait implementation for a Vec<T> with support for both T and &[T] trait bounds.
 impl<T> Source for Vec<T>
 where
     T: From<Symbol> + clone::Clone,
@@ -263,7 +295,12 @@ mod tests {
 
     #[test]
     fn wrapper_pad_vec_u8_right_align_whitespace() {
-        let output: Vec<u8> = pad(vec![0u8, 2, 65, 8, 41], 13, Alignment::Right, Symbol::Whitespace);
+        let output: Vec<u8> = pad(
+            vec![0u8, 2, 65, 8, 41],
+            13,
+            Alignment::Right,
+            Symbol::Whitespace,
+        );
         let mut expected: Vec<u8> = vec![b' '; 8];
         expected.extend_from_slice(&vec![0u8, 2, 65, 8, 41]);
 
@@ -285,7 +322,13 @@ mod tests {
     fn wrapper_pad_and_push_to_buffer_str_left_align_zero() {
         let width: usize = 20;
         let mut output = String::with_capacity(width);
-        pad_and_push_to_buffer("testcool  123", width, Alignment::Left, Symbol::Zero, &mut output);
+        pad_and_push_to_buffer(
+            "testcool  123",
+            width,
+            Alignment::Left,
+            Symbol::Zero,
+            &mut output,
+        );
 
         let mut expected = String::from("testcool  123");
         expected.push_str("0000000");
