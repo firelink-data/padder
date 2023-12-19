@@ -33,7 +33,7 @@
 /// | a | b | c |   -->  | a | b | c |   |   |   |
 /// +---+---+---+        +---+---+---+---+---+---+
 ///
-///
+
 use std::clone;
 
 /// Exhaustive enum for the alternative ways to pad and format data.
@@ -44,7 +44,7 @@ pub enum Alignment {
     Center,
 }
 
-///
+/// Exhaustive enum for the supported padding symbols.
 #[derive(Debug, Clone, Copy)]
 pub enum Symbol {
     Whitespace,
@@ -52,7 +52,8 @@ pub enum Symbol {
     Hyphen,
 }
 
-///
+/// Convert the [`Symbol`] enum into its character representation.
+/// Moves the ownership of the enum to the caller.
 impl From<Symbol> for char {
     fn from(symbol: Symbol) -> Self {
         match symbol {
@@ -63,7 +64,32 @@ impl From<Symbol> for char {
     }
 }
 
-///
+/// Convert the [`Symbol`] enum into its slice-char representation.
+/// Moves the ownership of the enum to the caller.
+impl From<Symbol> for &[char] {
+    fn from(symbol: Symbol) -> Self {
+        match symbol {
+            Symbol::Hyphen => &['-'],
+            Symbol::Whitespace => &[' '],
+            Symbol::Zero => &['0'],
+        }
+    }
+}
+
+/// Convert the [`Symbol`] enum into its byte presentation.
+/// Moves the ownership of the enum to the caller.
+impl From<Symbol> for u8 {
+    fn from(symbol: Symbol) -> Self {
+        match symbol {
+            Symbol::Hyphen => b'-',
+            Symbol::Whitespace => b' ',
+            Symbol::Zero => b'0',
+        }
+    }
+}
+
+/// Convert the [`Symbol`] enum into its slice representation.
+/// Moves the ownership of the enum to the caller.
 impl From<Symbol> for &[u8] {
     fn from(symbol: Symbol) -> Self {
         match symbol {
@@ -74,6 +100,7 @@ impl From<Symbol> for &[u8] {
     }
 }
 
+///
 pub trait Source {
     type Buffer;
     type Output;
@@ -89,7 +116,8 @@ pub trait Source {
     );
 }
 
-impl Source for str
+///
+impl Source for &str
 where
     char: From<Symbol>,
 {
@@ -148,8 +176,8 @@ where
 ///
 impl<T> Source for Vec<T>
 where
+    T: From<Symbol> + clone::Clone,
     for<'a> &'a [T]: From<Symbol>,
-    T: clone::Clone,
 {
     type Buffer = Vec<T>;
     type Output = Vec<T>;
@@ -203,14 +231,79 @@ where
     }
 }
 
-pub trait Target {}
+/// Wrapper for the [`Source`] trait implementation of its [`pad`] function.
+pub fn pad<S: Source>(source: S, width: usize, mode: Alignment, symbol: Symbol) -> S::Output {
+    source.pad(width, mode, symbol)
+}
+
+/// Wrapper for the [`Source`] trait implementation of its [`pad_and_push_to_buffer`] function.
+pub fn pad_and_push_to_buffer<S: Source>(
+    source: S,
+    width: usize,
+    mode: Alignment,
+    symbol: Symbol,
+    buffer: &mut S::Buffer,
+) {
+    source.pad_and_push_to_buffer(width, mode, symbol, buffer);
+}
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
-    fn pad_vec_left_align_hyphen() {
+    fn wrapper_pad_vec_char_left_align_zero() {
+        let output: Vec<char> = pad(vec!['a', 'b', 'c', '0'], 13, Alignment::Left, Symbol::Zero);
+        let mut expected: Vec<char> = vec!['a', 'b', 'c', '0'];
+        expected.extend_from_slice(&vec!['0'; 9]);
+
+        assert_eq!(expected, output);
+        assert_eq!(expected.capacity(), output.capacity());
+    }
+
+    #[test]
+    fn wrapper_pad_vec_u8_right_align_whitespace() {
+        let output: Vec<u8> = pad(vec![0u8, 2, 65, 8, 41], 13, Alignment::Right, Symbol::Whitespace);
+        let mut expected: Vec<u8> = vec![b' '; 8];
+        expected.extend_from_slice(&vec![0u8, 2, 65, 8, 41]);
+
+        assert_eq!(expected, output);
+        assert_ne!(expected.capacity(), output.capacity());
+    }
+
+    #[test]
+    fn wrapper_pad_str_center_align_hyphen() {
+        let output: String = pad("hejj jag", 20, Alignment::Center, Symbol::Hyphen);
+        let mut expected = String::from("------hejj jag");
+        expected.push_str("------");
+
+        assert_eq!(expected, output);
+        assert_ne!(expected.capacity(), output.capacity());
+    }
+
+    #[test]
+    fn wrapper_pad_and_push_to_buffer_str_left_align_zero() {
+        let width: usize = 20;
+        let mut output = String::with_capacity(width);
+        pad_and_push_to_buffer("testcool  123", width, Alignment::Left, Symbol::Zero, &mut output);
+
+        let mut expected = String::from("testcool  123");
+        expected.push_str("0000000");
+
+        assert_eq!(expected, output);
+        assert_ne!(expected.capacity(), output.capacity());
+        assert_eq!(width, output.capacity());
+    }
+
+    #[test]
+    fn pad_vec_char_left_align_hypgen() {
+        let output: Vec<char> = vec!['a', 'b', 'c'].pad(6, Alignment::Left, Symbol::Hyphen);
+        let expected = vec!['a', 'b', 'c', '-', '-', '-'];
+        assert_eq!(expected, output);
+    }
+
+    #[test]
+    fn pad_vec_u8_left_align_hyphen() {
         let output = vec![0u8, 1, 2, 3].pad(6, Alignment::Left, Symbol::Hyphen);
         let mut expected = vec![0u8, 1, 2, 3];
         expected.extend_from_slice("--".as_bytes());
@@ -224,7 +317,7 @@ mod tests {
     }
 
     #[test]
-    fn pad_vec_right_align_hyphen() {
+    fn pad_vec_u8_right_align_hyphen() {
         let output = vec![14u8, 12u8, 9u8].pad(5, Alignment::Right, Symbol::Hyphen);
         let mut expected = "--".as_bytes().to_vec();
         expected.extend_from_slice(&vec![14u8, 12u8, 9u8]);
@@ -234,7 +327,7 @@ mod tests {
     }
 
     #[test]
-    fn pad_vec_center_align_hyphen() {
+    fn pad_vec_u8_center_align_hyphen() {
         let output = vec![14u8, 12u8, 9u8].pad(5, Alignment::Center, Symbol::Hyphen);
         let mut expected = "-".as_bytes().to_vec();
         expected.extend_from_slice(&vec![14u8, 12u8, 9u8]);
