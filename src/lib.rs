@@ -22,124 +22,261 @@
 * SOFTWARE.
 *
 * File created: 2023-12-14
-* Last updated: 2023-12-14
+* Last updated: 2023-12-19
 */
 
-use log::warn;
-use std::fmt;
-
+/// Highly efficient data and string formatting library for Rust.
 ///
-#[derive(Debug, Clone)]
-pub struct WidthError;
-
+/// Pad and format string slices and generic vectors efficiently with minimal memory
+/// allocation. This crate has guaranteed performance improvements over the standard
+/// library [`format!`] macro.
 ///
-impl fmt::Display for WidthError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            f,
-            "invalid target pad width for the provided string length."
-        )
-    }
-}
-
+/// # Examples
 ///
-#[derive(Debug)]
+/// Given the below string slice and target pad width 6, with [`Alignment::Left`] and
+/// [`PadSymbol::Whitespace`], the resulting output String can be seen on the right:
+///
+/// +---+---+---+        +---+---+---+---+---+---+
+/// | a | b | c |   -->  | a | b | c |   |   |   |
+/// +---+---+---+        +---+---+---+---+---+---+
+///
+/// ```
+/// let output: String = "abc".pad(6, Alignment::Left, Symbol::Whitespace);
+/// ```
+///
+use std::clone;
+
+/// Exhaustive enum for the alternative ways to pad and format data.
+#[derive(Debug, Clone, Copy)]
 pub enum Alignment {
     Left,
     Right,
     Center,
 }
 
-///
-pub fn whitespace(string: &str, width: usize, mode: Alignment) -> Result<String, WidthError> {
-    pad(string, width, &mode, ' ')
+/// Exhaustive enum for the supported padding symbols.
+#[derive(Debug, Clone, Copy)]
+pub enum Symbol {
+    Whitespace,
+    Zero,
+    Hyphen,
 }
 
-///
-pub fn zeros(string: &str, width: usize, mode: Alignment) -> Result<String, WidthError> {
-    pad(string, width, &mode, '0')
-}
-
-///
-pub fn pad_into_bytes(
-    string: &str,
-    width: usize,
-    mode: Alignment,
-    pad_char: char,
-) -> Result<Vec<u8>, WidthError> {
-    Ok(pad(string, width, &mode, pad_char)?.into_bytes())
-}
-
-///
-pub fn pad_and_push_to_buffer(
-    string: &str,
-    width: usize,
-    mode: Alignment,
-    pad_char: char,
-    buffer: &mut Vec<u8>,
-) {
-    let padded: String = match pad(string, width, &mode, pad_char) {
-        Ok(s) => s,
-        Err(e) => {
-            warn!("could not pad `{}` due to: {}", string, e);
-            warn!("will slice the string to fit in the buffer, expect some data to be missing...");
-            slice_to_fit(string, width, &mode).to_string()
-        }
-    };
-
-    buffer.extend_from_slice(padded.as_bytes());
-}
-
-///
-/// # Panic
-/// Iff the [`pad`] function returns a [`WidthError`], at which point the string can't be padded.
-pub fn try_pad_and_push_to_buffer(
-    string: &str,
-    width: usize,
-    mode: Alignment,
-    pad_char: char,
-    buffer: &mut Vec<u8>,
-) {
-    buffer.extend_from_slice(pad(string, width, &mode, pad_char).unwrap().as_bytes());
-}
-
-///
-/// # Error
-/// Iff the target padding width is less than the length of the string to pad.
-fn pad(string: &str, width: usize, mode: &Alignment, pad_char: char) -> Result<String, WidthError> {
-    if width < string.len() {
-        return Err(WidthError);
-    }
-
-    let mut output = String::with_capacity(width);
-    let diff: usize = width - string.len();
-
-    if diff == 0 {
-        return Ok(string.to_string());
-    }
-
-    let (lpad, rpad) = match mode {
-        Alignment::Left => (0, diff),
-        Alignment::Right => (diff, 0),
-        Alignment::Center => (diff / 2, diff - diff / 2),
-    };
-
-    (0..lpad).for_each(|_| output.push(pad_char));
-    output.push_str(string);
-    (0..rpad).for_each(|_| output.push(pad_char));
-
-    Ok(output)
-}
-
-///
-fn slice_to_fit<'a>(string: &'a str, width: usize, mode: &'a Alignment) -> &'a str {
-    match mode {
-        Alignment::Left => &string[0..width],
-        Alignment::Right => &string[(string.len() - width)..],
-        Alignment::Center => {
-            &string[(string.len() / 2 - width / 2)..(string.len() / 2 + width / 2)]
+/// Convert the [`Symbol`] enum into its character representation.
+/// Moves the ownership of the enum to the caller.
+impl From<Symbol> for char {
+    fn from(symbol: Symbol) -> Self {
+        match symbol {
+            Symbol::Hyphen => '-',
+            Symbol::Whitespace => ' ',
+            Symbol::Zero => '0',
         }
     }
+}
+
+/// Convert the [`Symbol`] enum into its slice-char representation.
+/// Moves the ownership of the enum to the caller.
+impl From<Symbol> for &[char] {
+    fn from(symbol: Symbol) -> Self {
+        match symbol {
+            Symbol::Hyphen => &['-'],
+            Symbol::Whitespace => &[' '],
+            Symbol::Zero => &['0'],
+        }
+    }
+}
+
+/// Convert the [`Symbol`] enum into its byte presentation.
+/// Moves the ownership of the enum to the caller.
+impl From<Symbol> for u8 {
+    fn from(symbol: Symbol) -> Self {
+        match symbol {
+            Symbol::Hyphen => b'-',
+            Symbol::Whitespace => b' ',
+            Symbol::Zero => b'0',
+        }
+    }
+}
+
+/// Convert the [`Symbol`] enum into its slice representation.
+/// Moves the ownership of the enum to the caller.
+impl From<Symbol> for &[u8] {
+    fn from(symbol: Symbol) -> Self {
+        match symbol {
+            Symbol::Hyphen => "-".as_bytes(),
+            Symbol::Whitespace => " ".as_bytes(),
+            Symbol::Zero => "0".as_bytes(),
+        }
+    }
+}
+
+/// A trait providing functions to perform padding and formatting on the implemented type.
+///
+/// The main [`Source::pad`] API for this trait requires the caller to provide three knowns:
+///     1. The target width as a usize.
+///     2. The padding alignment mode, see [`Alignment`] for allowed modes.
+///     3. The symbol to pad with, see [`Symbol`] for allowed symbols.
+///
+/// The trait is bound only for types T that implement the [`From<Symbol>`] trait. This is
+/// to guarantee that the datatype that the caller wants to pad with can be converted from
+/// the [`Symbol`] enum type to the corresponding type.
+///
+/// Utilizing this trait has guaranteed performance improvements over the [`format!`] macro
+/// in the standard library, mainly due to only allocating memory on the heap once.
+pub trait Source {
+    type Buffer;
+    type Output;
+
+    /// Pad the source, the caller type, to fit the target width.
+    ///
+    fn pad(&self, width: usize, mode: Alignment, symbol: Symbol) -> Self::Output;
+
+    /// Slice the source to fit the target width and return it as the defined output type.
+    ///
+    /// This function is called whenever a call to [`pad`] is attempted but the
+    /// length of the source is less than the width. This truncates the source
+    /// and may lead to data loss. This is logged to stdout whenever it occurs.
+    fn slice_to_fit(&self, width: usize, mode: Alignment) -> Self::Output;
+
+    ///
+    fn pad_and_push_to_buffer(
+        &self,
+        width: usize,
+        mode: Alignment,
+        symbol: Symbol,
+        buffer: &mut Self::Buffer,
+    );
+}
+
+/// Trait implementation for a string slice.
+impl Source for &str
+where
+    char: From<Symbol>,
+{
+    type Buffer = String;
+    type Output = String;
+
+    fn slice_to_fit(&self, width: usize, mode: Alignment) -> Self::Output {
+        match mode {
+            Alignment::Left => self[0..width].to_string(),
+            Alignment::Right => self[(self.len() - width)..].to_string(),
+            Alignment::Center => {
+                self[(self.len() / 2 - width / 2)..(self.len() / 2 + width / 2)].to_string()
+            }
+        }
+    }
+
+    fn pad(&self, width: usize, mode: Alignment, symbol: Symbol) -> Self::Output {
+        if width < self.len() {
+            return self.slice_to_fit(width, mode);
+        }
+
+        let mut output = String::with_capacity(width);
+        let diff: usize = width - self.len();
+
+        if diff == 0 {
+            return self.to_string();
+        }
+
+        let (lpad, rpad) = match mode {
+            Alignment::Left => (0, diff),
+            Alignment::Right => (diff, 0),
+            Alignment::Center => (diff / 2, diff - diff / 2),
+        };
+
+        let pad_char: char = symbol.into();
+
+        (0..lpad).for_each(|_| output.push(pad_char));
+        output.push_str(self);
+        (0..rpad).for_each(|_| output.push(pad_char));
+
+        output
+    }
+
+    fn pad_and_push_to_buffer(
+        &self,
+        width: usize,
+        mode: Alignment,
+        symbol: Symbol,
+        buffer: &mut Self::Buffer,
+    ) {
+        let padded: Self::Output = self.pad(width, mode, symbol);
+        buffer.push_str(padded.as_str());
+    }
+}
+
+/// Trait implementation for a Vec<T> with support for both T and &[T] trait bounds.
+impl<T> Source for Vec<T>
+where
+    T: From<Symbol> + clone::Clone,
+    for<'a> &'a [T]: From<Symbol>,
+{
+    type Buffer = Vec<T>;
+    type Output = Vec<T>;
+
+    fn slice_to_fit(&self, width: usize, mode: Alignment) -> Self::Output {
+        match mode {
+            Alignment::Left => self[..width].to_vec(),
+            Alignment::Right => self[(self.len() - width)..].to_vec(),
+            Alignment::Center => {
+                self[(self.len() / 2 - width / 2)..(self.len() / 2 + width / 2)].to_vec()
+            }
+        }
+    }
+
+    fn pad(&self, width: usize, mode: Alignment, symbol: Symbol) -> Self::Output {
+        if width < self.len() {
+            return self.slice_to_fit(width, mode);
+        }
+
+        let mut output: Vec<T> = Vec::with_capacity(width);
+        let diff: usize = width - self.len();
+
+        if diff == 0 {
+            return self.to_vec();
+        }
+
+        let (lpad, rpad) = match mode {
+            Alignment::Left => (0, diff),
+            Alignment::Right => (diff, 0),
+            Alignment::Center => (diff / 2, diff - diff / 2),
+        };
+
+        let pad_byte: &[T] = symbol.into();
+
+        (0..lpad).for_each(|_| output.extend_from_slice(pad_byte));
+        output.extend_from_slice(self);
+        (0..rpad).for_each(|_| output.extend_from_slice(pad_byte));
+
+        output
+    }
+
+    fn pad_and_push_to_buffer(
+        &self,
+        width: usize,
+        mode: Alignment,
+        symbol: Symbol,
+        buffer: &mut Self::Buffer,
+    ) {
+        let padded: Self::Output = self.pad(width, mode, symbol);
+        buffer.extend_from_slice(&padded);
+    }
+}
+
+/// Wrapper for the [`Source`] trait implementation of its [`pad`] function.
+pub fn pad<S: Source>(source: S, width: usize, mode: Alignment, symbol: Symbol) -> S::Output {
+    source.pad(width, mode, symbol)
+}
+
+/// Wrapper for the [`Source`] trait implementation of its [`pad_and_push_to_buffer`] function.
+pub fn pad_and_push_to_buffer<S: Source>(
+    source: S,
+    width: usize,
+    mode: Alignment,
+    symbol: Symbol,
+    buffer: &mut S::Buffer,
+) {
+    source.pad_and_push_to_buffer(width, mode, symbol, buffer);
 }
 
 #[cfg(test)]
@@ -147,157 +284,183 @@ mod tests {
     use super::*;
 
     #[test]
-    #[should_panic]
-    fn pad_unwrap_on_error() {
-        let mut buffer: Vec<u8> = Vec::with_capacity(193838);
-        try_pad_and_push_to_buffer(
-            "the length of this string is much larger than the target padding width",
-            10,
+    fn wrapper_pad_vec_char_left_align_zero() {
+        let output: Vec<char> = pad(vec!['a', 'b', 'c', '0'], 13, Alignment::Left, Symbol::Zero);
+        let mut expected: Vec<char> = vec!['a', 'b', 'c', '0'];
+        expected.extend_from_slice(&vec!['0'; 9]);
+
+        assert_eq!(expected, output);
+        assert_eq!(expected.capacity(), output.capacity());
+    }
+
+    #[test]
+    fn wrapper_pad_vec_u8_right_align_whitespace() {
+        let output: Vec<u8> = pad(
+            vec![0u8, 2, 65, 8, 41],
+            13,
             Alignment::Right,
-            ' ',
-            &mut buffer,
+            Symbol::Whitespace,
         );
+        let mut expected: Vec<u8> = vec![b' '; 8];
+        expected.extend_from_slice(&vec![0u8, 2, 65, 8, 41]);
+
+        assert_eq!(expected, output);
+        assert_ne!(expected.capacity(), output.capacity());
     }
 
     #[test]
-    fn pad_and_slice_to_fit_left_align() {
-        let mut buffer: Vec<u8> = Vec::with_capacity(193838);
+    fn wrapper_pad_str_center_align_hyphen() {
+        let output: String = pad("hejj jag", 20, Alignment::Center, Symbol::Hyphen);
+        let mut expected = String::from("------hejj jag");
+        expected.push_str("------");
+
+        assert_eq!(expected, output);
+        assert_ne!(expected.capacity(), output.capacity());
+    }
+
+    #[test]
+    fn wrapper_pad_and_push_to_buffer_str_left_align_zero() {
+        let width: usize = 20;
+        let mut output = String::with_capacity(width);
         pad_and_push_to_buffer(
-            "the length of this string is much larger than the target padding width",
-            10,
-            Alignment::Left,
-            ' ',
-            &mut buffer,
-        );
-
-        assert_eq!("the length".as_bytes(), buffer);
-    }
-
-    #[test]
-    fn pad_and_slice_to_fit_right_align() {
-        let mut buffer: Vec<u8> = Vec::with_capacity(193838);
-        pad_and_push_to_buffer(
-            "the length of this string is much larger than the target padding width",
-            10,
-            Alignment::Right,
-            ' ',
-            &mut buffer,
-        );
-
-        assert_eq!("ding width".as_bytes(), buffer);
-    }
-
-    #[test]
-    fn pad_and_slice_to_fit_center_align_even() {
-        let mut buffer: Vec<u8> = Vec::with_capacity(1024);
-        pad_and_push_to_buffer("hejjag", 2, Alignment::Center, ' ', &mut buffer);
-
-        assert_eq!("jj".as_bytes(), buffer);
-    }
-
-    #[test]
-    fn pad_and_slice_to_fit_center_align_uneven() {
-        let mut buffer: Vec<u8> = Vec::with_capacity(1024);
-        pad_and_push_to_buffer(
-            "a little bit trickier center align!",
-            10,
-            Alignment::Center,
-            ' ',
-            &mut buffer,
-        );
-
-        assert_eq!(" trickier ".as_bytes(), buffer);
-    }
-
-    #[test]
-    #[should_panic]
-    fn pad_should_panic() {
-        let _ = whitespace("lol hahahah xd test", 15, Alignment::Center).unwrap();
-    }
-
-    #[test]
-    fn pad_whitespace_right_align_into_bytes() {
-        let width: usize = 30;
-        let bytes = pad_into_bytes("this is cool", width, Alignment::Right, ' ');
-
-        assert_eq!(
-            format!("{:>width$}", "this is cool").into_bytes(),
-            bytes.unwrap()
-        );
-    }
-
-    #[test]
-    fn pad_zeros_left_align_push_to_buffer() {
-        let width: usize = 128;
-        let expected: Vec<u8> =
-            format!("{:0<width$}", "testing buffer reuse smart memory").into_bytes();
-
-        let mut buffer: Vec<u8> = Vec::with_capacity(1024 * 1024);
-        pad_and_push_to_buffer(
-            "testing buffer reuse smart memory",
+            "testcool  123",
             width,
             Alignment::Left,
-            '0',
-            &mut buffer,
+            Symbol::Zero,
+            &mut output,
         );
 
-        assert_eq!(expected.len(), buffer.len());
-        assert_eq!(expected, buffer);
+        let mut expected = String::from("testcool  123");
+        expected.push_str("0000000");
+
+        assert_eq!(expected, output);
+        assert_ne!(expected.capacity(), output.capacity());
+        assert_eq!(width, output.capacity());
     }
 
     #[test]
-    fn pad_whitespace_left_align() {
-        let width: usize = 30;
-        let pad = whitespace("this is cool", width, Alignment::Left);
-
-        assert_eq!(format!("{:<width$}", "this is cool"), pad.unwrap());
+    fn pad_vec_char_left_align_hypgen() {
+        let output: Vec<char> = vec!['a', 'b', 'c'].pad(6, Alignment::Left, Symbol::Hyphen);
+        let expected = vec!['a', 'b', 'c', '-', '-', '-'];
+        assert_eq!(expected, output);
     }
 
     #[test]
-    fn pad_whitespace_right_align() {
-        let width: usize = 30;
-        let pad = whitespace("this is cool", width, Alignment::Right);
+    fn pad_vec_u8_left_align_hyphen() {
+        let output = vec![0u8, 1, 2, 3].pad(6, Alignment::Left, Symbol::Hyphen);
+        let mut expected = vec![0u8, 1, 2, 3];
+        expected.extend_from_slice("--".as_bytes());
 
-        assert_eq!(format!("{:>width$}", "this is cool"), pad.unwrap());
+        assert_eq!(expected, output);
+        // The Vec that we extend from slice with is `most likely` going to have
+        // a capacity of 8, since the Vec implementation doubles the allocated space
+        // that is needed as it extends, however, our implementation allocates exactly
+        // the amount that is needed.
+        assert_ne!(expected.capacity(), output.capacity());
     }
 
     #[test]
-    fn pad_whitespace_center_align() {
-        let width: usize = 30;
-        let pad = whitespace("this is cool", width, Alignment::Center);
+    fn pad_vec_u8_right_align_hyphen() {
+        let output = vec![14u8, 12u8, 9u8].pad(5, Alignment::Right, Symbol::Hyphen);
+        let mut expected = "--".as_bytes().to_vec();
+        expected.extend_from_slice(&vec![14u8, 12u8, 9u8]);
 
-        assert_eq!(format!("{:^width$}", "this is cool"), pad.unwrap());
+        assert_eq!(expected, output);
+        assert_ne!(expected.capacity(), output.capacity());
     }
 
     #[test]
-    fn pad_zeros_left_align() {
-        let width: usize = 30;
-        let pad = zeros("this is cool", width, Alignment::Left);
+    fn pad_vec_u8_center_align_hyphen() {
+        let output = vec![14u8, 12u8, 9u8].pad(5, Alignment::Center, Symbol::Hyphen);
+        let mut expected = "-".as_bytes().to_vec();
+        expected.extend_from_slice(&vec![14u8, 12u8, 9u8]);
+        expected.extend_from_slice("-".as_bytes());
 
-        assert_eq!(format!("{:0<width$}", "this is cool"), pad.unwrap());
+        assert_eq!(expected, output);
+        assert_ne!(expected.capacity(), output.capacity());
     }
 
     #[test]
-    fn pad_zeros_right_align() {
-        let width: usize = 30;
-        let pad = zeros("this is cool", width, Alignment::Right);
-
-        assert_eq!(format!("{:0>width$}", "this is cool"), pad.unwrap());
+    fn pad_str_left_align_hyphen() {
+        let output = "hej178".pad(12, Alignment::Left, Symbol::Hyphen);
+        let expected = "hej178------".to_string();
+        assert_eq!(expected, output);
     }
 
     #[test]
-    fn pad_zeros_center_align() {
-        let width: usize = 30;
-        let pad = zeros("this is cool", width, Alignment::Center);
-
-        assert_eq!(format!("{:0^width$}", "this is cool"), pad.unwrap());
+    fn pad_str_right_align_hyphen() {
+        let output = "9184".pad(8, Alignment::Right, Symbol::Hyphen);
+        let expected = "----9184".to_string();
+        assert_eq!(expected, output);
     }
 
     #[test]
-    fn pad_1000000_zeros_center() {
-        let width: usize = 100_000_000;
-        let pad = zeros("this is cool", width, Alignment::Center);
+    fn pad_str_center_align_hyphen() {
+        let output = "hejjj".pad(9, Alignment::Center, Symbol::Hyphen);
+        let expected = "--hejjj--".to_string();
+        assert_eq!(expected, output);
+    }
 
-        assert_eq!(format!("{:0^width$}", "this is cool"), pad.unwrap());
+    #[test]
+    fn pad_str_center_align_hyphen_even() {
+        let output = "hejjj".pad(10, Alignment::Center, Symbol::Hyphen);
+        let expected = "--hejjj---".to_string();
+        assert_eq!(expected, output);
+    }
+
+    #[test]
+    fn pad_str_neft_align_whitespace() {
+        let output = "hej".pad(6, Alignment::Left, Symbol::Whitespace);
+        let expected = "hej   ".to_string();
+        assert_eq!(expected, output);
+    }
+
+    #[test]
+    fn pad_str_right_align_whitespace() {
+        let output = "hejjj".pad(9, Alignment::Right, Symbol::Whitespace);
+        let expected = "    hejjj".to_string();
+        assert_eq!(expected, output);
+    }
+
+    #[test]
+    fn pad_str_center_align_whitespace() {
+        let output = "hejjj".pad(9, Alignment::Center, Symbol::Whitespace);
+        let expected = "  hejjj  ".to_string();
+        assert_eq!(expected, output);
+    }
+
+    #[test]
+    fn pad_str_center_align_whitespace_even() {
+        let output = "hejjj".pad(10, Alignment::Center, Symbol::Whitespace);
+        let expected = "  hejjj   ".to_string();
+        assert_eq!(expected, output);
+    }
+
+    #[test]
+    fn pad_str_left_align_zero() {
+        let output = "hej178".pad(12, Alignment::Left, Symbol::Zero);
+        let expected = "hej178000000".to_string();
+        assert_eq!(expected, output);
+    }
+
+    #[test]
+    fn pad_str_right_align_zero() {
+        let output = "9184".pad(8, Alignment::Right, Symbol::Zero);
+        let expected = "00009184".to_string();
+        assert_eq!(expected, output);
+    }
+
+    #[test]
+    fn pad_str_center_align_zero() {
+        let output = "hejjj".pad(9, Alignment::Center, Symbol::Whitespace);
+        let expected = "  hejjj  ".to_string();
+        assert_eq!(expected, output);
+    }
+
+    #[test]
+    fn pad_str_center_align_zero_even() {
+        let output = "hejjj".pad(10, Alignment::Center, Symbol::Whitespace);
+        let expected = "  hejjj   ".to_string();
+        assert_eq!(expected, output);
     }
 }
