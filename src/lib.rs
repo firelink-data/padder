@@ -22,7 +22,7 @@
 * SOFTWARE.
 *
 * File created: 2023-12-14
-* Last updated: 2023-12-18
+* Last updated: 2023-12-19
 */
 
 ///
@@ -34,7 +34,6 @@
 /// +---+---+---+        +---+---+---+---+---+---+
 ///
 ///
-
 use std::clone;
 
 /// Exhaustive enum for the alternative ways to pad and format data.
@@ -149,8 +148,8 @@ where
 ///
 impl<T> Source for Vec<T>
 where
-    T: From<Symbol> + clone::Clone,
-    for <'a> &'a [T]: From<Symbol>,
+    for<'a> &'a [T]: From<Symbol>,
+    T: clone::Clone,
 {
     type Buffer = Vec<T>;
     type Output = Vec<T>;
@@ -159,17 +158,23 @@ where
         match mode {
             Alignment::Left => self[..width].to_vec(),
             Alignment::Right => self[(self.len() - width)..].to_vec(),
-            Alignment::Center => self[(self.len() / 2 - width / 2)..(self.len() / 2 + width / 2)].to_vec(),
+            Alignment::Center => {
+                self[(self.len() / 2 - width / 2)..(self.len() / 2 + width / 2)].to_vec()
+            }
         }
     }
 
     fn pad(&self, width: usize, mode: Alignment, symbol: Symbol) -> Self::Output {
-        if width < self.len() { return self.slice_to_fit(width, mode); }
+        if width < self.len() {
+            return self.slice_to_fit(width, mode);
+        }
 
         let mut output: Vec<T> = Vec::with_capacity(width);
         let diff: usize = width - self.len();
 
-        if diff == 0 { return self.to_vec(); }
+        if diff == 0 {
+            return self.to_vec();
+        }
 
         let (lpad, rpad) = match mode {
             Alignment::Left => (0, diff),
@@ -184,16 +189,15 @@ where
         (0..rpad).for_each(|_| output.extend_from_slice(pad_byte));
 
         output
-
     }
 
     fn pad_and_push_to_buffer(
-            &self,
-            width: usize,
-            mode: Alignment,
-            symbol: Symbol,
-            buffer: &mut Self::Buffer,
-        ) {
+        &self,
+        width: usize,
+        mode: Alignment,
+        symbol: Symbol,
+        buffer: &mut Self::Buffer,
+    ) {
         let padded: Self::Output = self.pad(width, mode, symbol);
         buffer.extend_from_slice(&padded);
     }
@@ -208,6 +212,36 @@ mod tests {
     #[test]
     fn pad_vec_left_align_hyphen() {
         let output = vec![0u8, 1, 2, 3].pad(6, Alignment::Left, Symbol::Hyphen);
+        let mut expected = vec![0u8, 1, 2, 3];
+        expected.extend_from_slice("--".as_bytes());
+
+        assert_eq!(expected, output);
+        // The Vec that we extend from slice with is `most likely` going to have
+        // a capacity of 8, since the Vec implementation doubles the allocated space
+        // that is needed as it extends, however, our implementation allocates exactly
+        // the amount that is needed.
+        assert_ne!(expected.capacity(), output.capacity());
+    }
+
+    #[test]
+    fn pad_vec_right_align_hyphen() {
+        let output = vec![14u8, 12u8, 9u8].pad(5, Alignment::Right, Symbol::Hyphen);
+        let mut expected = "--".as_bytes().to_vec();
+        expected.extend_from_slice(&vec![14u8, 12u8, 9u8]);
+
+        assert_eq!(expected, output);
+        assert_ne!(expected.capacity(), output.capacity());
+    }
+
+    #[test]
+    fn pad_vec_center_align_hyphen() {
+        let output = vec![14u8, 12u8, 9u8].pad(5, Alignment::Center, Symbol::Hyphen);
+        let mut expected = "-".as_bytes().to_vec();
+        expected.extend_from_slice(&vec![14u8, 12u8, 9u8]);
+        expected.extend_from_slice("-".as_bytes());
+
+        assert_eq!(expected, output);
+        assert_ne!(expected.capacity(), output.capacity());
     }
 
     #[test]
@@ -239,7 +273,7 @@ mod tests {
     }
 
     #[test]
-    fn pad_str_left_align_whitespace() {
+    fn pad_str_neft_align_whitespace() {
         let output = "hej".pad(6, Alignment::Left, Symbol::Whitespace);
         let expected = "hej   ".to_string();
         assert_eq!(expected, output);
