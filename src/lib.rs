@@ -46,7 +46,6 @@
 /// let output: String = "abc".pad(6, Alignment::Left, Symbol::Whitespace);
 /// ```
 ///
-
 use std::clone;
 
 /// Exhaustive enum for the alternative ways to pad and format data.
