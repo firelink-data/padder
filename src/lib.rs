@@ -33,6 +33,9 @@
 /// | a | b | c |   -->  | a | b | c |   |   |   |
 /// +---+---+---+        +---+---+---+---+---+---+
 ///
+///
+
+use std::clone;
 
 /// Exhaustive enum for the alternative ways to pad and format data.
 #[derive(Debug, Clone, Copy)]
@@ -54,14 +57,25 @@ pub enum Symbol {
 impl From<Symbol> for char {
     fn from(symbol: Symbol) -> Self {
         match symbol {
+            Symbol::Hyphen => '-',
             Symbol::Whitespace => ' ',
             Symbol::Zero => '0',
-            Symbol::Hyphen => '-',
         }
     }
 }
 
-pub trait PadSource {
+///
+impl From<Symbol> for &[u8] {
+    fn from(symbol: Symbol) -> Self {
+        match symbol {
+            Symbol::Hyphen => "-".as_bytes(),
+            Symbol::Whitespace => " ".as_bytes(),
+            Symbol::Zero => "0".as_bytes(),
+        }
+    }
+}
+
+pub trait Source {
     type Buffer;
     type Output;
 
@@ -76,7 +90,7 @@ pub trait PadSource {
     );
 }
 
-impl PadSource for str
+impl Source for str
 where
     char: From<Symbol>,
 {
@@ -132,11 +146,97 @@ where
     }
 }
 
-pub trait PadTarget {}
+///
+impl<T> Source for Vec<T>
+where
+    T: From<Symbol> + clone::Clone,
+    for <'a> &'a [T]: From<Symbol>,
+{
+    type Buffer = Vec<T>;
+    type Output = Vec<T>;
+
+    fn slice_to_fit(&self, width: usize, mode: Alignment) -> Self::Output {
+        match mode {
+            Alignment::Left => self[..width].to_vec(),
+            Alignment::Right => self[(self.len() - width)..].to_vec(),
+            Alignment::Center => self[(self.len() / 2 - width / 2)..(self.len() / 2 + width / 2)].to_vec(),
+        }
+    }
+
+    fn pad(&self, width: usize, mode: Alignment, symbol: Symbol) -> Self::Output {
+        if width < self.len() { return self.slice_to_fit(width, mode); }
+
+        let mut output: Vec<T> = Vec::with_capacity(width);
+        let diff: usize = width - self.len();
+
+        if diff == 0 { return self.to_vec(); }
+
+        let (lpad, rpad) = match mode {
+            Alignment::Left => (0, diff),
+            Alignment::Right => (diff, 0),
+            Alignment::Center => (diff / 2, diff - diff / 2),
+        };
+
+        let pad_byte: &[T] = symbol.into();
+
+        (0..lpad).for_each(|_| output.extend_from_slice(pad_byte));
+        output.extend_from_slice(self);
+        (0..rpad).for_each(|_| output.extend_from_slice(pad_byte));
+
+        output
+
+    }
+
+    fn pad_and_push_to_buffer(
+            &self,
+            width: usize,
+            mode: Alignment,
+            symbol: Symbol,
+            buffer: &mut Self::Buffer,
+        ) {
+        let padded: Self::Output = self.pad(width, mode, symbol);
+        buffer.extend_from_slice(&padded);
+    }
+}
+
+pub trait Target {}
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn pad_vec_left_align_hyphen() {
+        let output = vec![0u8, 1, 2, 3].pad(6, Alignment::Left, Symbol::Hyphen);
+    }
+
+    #[test]
+    fn pad_str_left_align_hyphen() {
+        let output = "hej178".pad(12, Alignment::Left, Symbol::Hyphen);
+        let expected = "hej178------".to_string();
+        assert_eq!(expected, output);
+    }
+
+    #[test]
+    fn pad_str_right_align_hyphen() {
+        let output = "9184".pad(8, Alignment::Right, Symbol::Hyphen);
+        let expected = "----9184".to_string();
+        assert_eq!(expected, output);
+    }
+
+    #[test]
+    fn pad_str_center_align_hyphen() {
+        let output = "hejjj".pad(9, Alignment::Center, Symbol::Hyphen);
+        let expected = "--hejjj--".to_string();
+        assert_eq!(expected, output);
+    }
+
+    #[test]
+    fn pad_str_center_align_hyphen_even() {
+        let output = "hejjj".pad(10, Alignment::Center, Symbol::Hyphen);
+        let expected = "--hejjj---".to_string();
+        assert_eq!(expected, output);
+    }
 
     #[test]
     fn pad_str_left_align_whitespace() {
@@ -177,6 +277,20 @@ mod tests {
     fn pad_str_right_align_zero() {
         let output = "9184".pad(8, Alignment::Right, Symbol::Zero);
         let expected = "00009184".to_string();
+        assert_eq!(expected, output);
+    }
+
+    #[test]
+    fn pad_str_center_align_zero() {
+        let output = "hejjj".pad(9, Alignment::Center, Symbol::Whitespace);
+        let expected = "  hejjj  ".to_string();
+        assert_eq!(expected, output);
+    }
+
+    #[test]
+    fn pad_str_center_align_zero_even() {
+        let output = "hejjj".pad(10, Alignment::Center, Symbol::Whitespace);
+        let expected = "  hejjj   ".to_string();
         assert_eq!(expected, output);
     }
 }
