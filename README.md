@@ -8,6 +8,7 @@
 [![Crates.io (latest)](https://img.shields.io/crates/v/padder)](https://crates.io/crates/padder)
 [![codecov](https://codecov.io/gh/firelink-data/padder/graph/badge.svg?token=64QB0J4QMV)](https://codecov.io/gh/firelink-data/padder)
 [![CI](https://github.com/firelink-data/padder/actions/workflows/ci.yml/badge.svg)](https://github.com/firelink-data/padder/actions/workflows/ci.yml)
+[![CD](https://github.com/firelink-data/padder/actions/workflows/cd.yml/badge.svg)](https://github.com/firelink-data/padder/actions/workflows/cd.yml)
 [![Tests](https://github.com/firelink-data/padder/actions/workflows/tests.yml/badge.svg)](https://github.com/firelink-data/padder/actions/workflows/tests.yml)
 
 ⚡️*Highly efficient data and string formatting library for Rust.*
