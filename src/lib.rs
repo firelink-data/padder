@@ -64,6 +64,26 @@ pub enum Symbol {
     Hyphen,
 }
 
+impl From<Symbol> for i32 {
+    fn from(symbol: Symbol) -> Self {
+        match symbol {
+            Symbol::Hyphen => 3,
+            Symbol::Whitespace => 2,
+            Symbol::Zero => 0,
+        }
+    }
+}
+
+impl From<Symbol> for &[i32] {
+    fn from(symbol: Symbol) -> Self {
+        match symbol {
+            Symbol::Hyphen => &[3i32],
+            Symbol::Whitespace => &[2i32],
+            Symbol::Zero => &[0i32],
+        }
+    }
+}
+
 /// Convert the [`Symbol`] enum into its character representation.
 /// Moves the ownership of the enum to the caller.
 impl From<Symbol> for char {
@@ -153,7 +173,7 @@ pub trait Source {
 /// Trait implementation for a string slice.
 impl Source for &str
 where
-    char: From<Symbol>,
+    Symbol: Into<char>,
 {
     type Buffer = String;
     type Output = String;
@@ -293,6 +313,13 @@ mod tests {
 
         assert_eq!(expected, output);
         assert_eq!(expected.capacity(), output.capacity());
+    }
+
+    #[test]
+    fn rickard_test() {
+        let output: Vec<i32> = pad(vec![4i32, 5, 6], 5, Alignment::Right, Symbol::Zero);
+        let expected: Vec<i32> = vec![0i32, 0, 4, 5, 6];
+        assert_eq!(expected, output);
     }
 
     #[test]
