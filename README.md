@@ -15,20 +15,21 @@
 
 </div>
 
+
 ## 🔎 Overview
 
-Pad and format string slices and generic vectors efficiently with minimal memory allocation.
-This crate has guaranteed performance improvements over the standard library `format!` macro.
-Clone this repo and run `cargo bench` to see benchmark comparisons between our implementation and the standard library.
+Pad and format virtually any generic slice or vector efficiently with minimal memory overhead. This crate has guaranteed performance improvements over the standard
+library `format!` macro. Clone this repository and run `cargo bench` to see benchmark comparisons between this implementation and the standard library.
 
-The library defines a core trait called `Source` and also has this implemented on two main
-types of datastructures, the string slice `&str` and a generic vector `Vec<T>` with some trait bounds on the type `T`. 
-This allows for any developer to implement the trait on any datastructure that they want to be
-able to pad or format using any of the padding modes defined in the crate.
+The library defines a core trait called `Source` which enables efficient padding on the type. It is currently implemented on three main types of datastructures:
+the string slice `&str`, the generic slice `&[T]`, and also the generic vector `Vec<T>`. Note that the type `T` has to adhere to the trait bound `T: From<Symbol>`,
+where `Symbol` is the Enum representing the available characters/symbols to pad and format with. If you want to extend the padding capabilities of the `Source` trait
+with your own type `T`, then you need to also implement the `From<Symbol>` trait for your type `T`. See the implementations for examples on how to do this, [link](https://github.com/firelink-data/padder/blob/main/src/lib.rs).
+
 
 ## 📦 Installation
 
-The easiest way to include *padder* in your projects is by using the [Cargo](https://crates.io/) package manager.
+The easiest way to include *padder* in your own crate is by using the [Cargo](https://crates.io/) package manager.
 ```
 $ cargo add padder
 ```
@@ -40,6 +41,7 @@ $ cd padder
 $ cargo build --release
 ```
 
+
 ## 🚀 Examples
 
 Adding *padder* to your crate dependecy will bring the `Source` trait into scope and allow padding. 
@@ -50,7 +52,7 @@ You can for example pad string slices very easily in the following way:
 let padded: String = "cool".pad(10, Alignment::Center, Symbol::Zero);
 ```
 
-which would produce the padded String `000cool000`. You can also pad to an already allocated buffer, allowing you full control of heap allocations, like below:
+which would produce the padded String `000cool000`. You can also pad to an already allocated buffer, granting you full control of any heap allocations, like below:
 
 ```rust
 let width: usize = 8;
@@ -59,7 +61,7 @@ let original = vec![13u8, 9, 128, 81];
 original.pad_and_push_to_buffer(width, Alignment::Right, Symbol::Whitespace, output);
 ```
 
-There also exists two wrapper methods simply called `pad` and `pad_and_push_to_buffer` which allows padding any object as long as it implements the `Source` trait.
+There also exists two wrapper methods simply called `pad` and `pad_and_push_to_buffer` which allows padding on any type as long as it implements the `Source` trait.
 You can for example use these functions like below:
 ```rust
 // pad
