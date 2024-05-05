@@ -174,9 +174,9 @@ where
         match mode {
             Alignment::Left => self[0..width].to_string(),
             Alignment::Right => self[(self.len() - width)..].to_string(),
-            Alignment::Center => {
-                self[(self.len() / 2 - width / 2)..(self.len() / 2 + width / 2)].to_string()
-            }
+            Alignment::Center => self
+                [(self.len() / 2 - width / 2)..(self.len() / 2 + width / 2 + width % 2)]
+                .to_string(),
         }
     }
 
@@ -185,9 +185,7 @@ where
             return self.slice_to_fit(width, mode);
         }
 
-        let mut output = String::with_capacity(width);
         let diff: usize = width - self.len();
-
         if diff == 0 {
             return self.to_string();
         }
@@ -195,6 +193,7 @@ where
         let (lpad, rpad) = mode.left_right_padding(diff);
         let pad_char: char = symbol.into();
 
+        let mut output = String::with_capacity(width);
         (0..lpad).for_each(|_| output.push(pad_char));
         output.push_str(self);
         (0..rpad).for_each(|_| output.push(pad_char));
@@ -227,9 +226,9 @@ where
         match mode {
             Alignment::Left => self[0..width].to_vec(),
             Alignment::Right => self[(self.len() - width)..].to_vec(),
-            Alignment::Center => {
-                self[(self.len() / 2 - width / 2)..(self.len() / 2 + width / 2)].to_vec()
-            }
+            Alignment::Center => self
+                [(self.len() / 2 - width / 2)..(self.len() / 2 + width / 2 + width % 2)]
+                .to_vec(),
         }
     }
 
@@ -238,9 +237,7 @@ where
             return self.slice_to_fit(width, mode);
         }
 
-        let mut output: Vec<T> = Vec::with_capacity(width);
         let diff: usize = width - self.len();
-
         if diff == 0 {
             return self.to_vec();
         }
@@ -248,6 +245,7 @@ where
         let (lpad, rpad) = mode.left_right_padding(diff);
         let pad_type: &[T] = symbol.into();
 
+        let mut output: Vec<T> = Vec::with_capacity(width);
         (0..lpad).for_each(|_| output.extend_from_slice(pad_type));
         output.extend_from_slice(self);
         (0..rpad).for_each(|_| output.extend_from_slice(pad_type));
@@ -280,9 +278,9 @@ where
         match mode {
             Alignment::Left => self[..width].to_vec(),
             Alignment::Right => self[(self.len() - width)..].to_vec(),
-            Alignment::Center => {
-                self[(self.len() / 2 - width / 2)..(self.len() / 2 + width / 2)].to_vec()
-            }
+            Alignment::Center => self
+                [(self.len() / 2 - width / 2)..(self.len() / 2 + width / 2 + width % 2)]
+                .to_vec(),
         }
     }
 
@@ -291,9 +289,7 @@ where
             return self.slice_to_fit(width, mode);
         }
 
-        let mut output: Vec<T> = Vec::with_capacity(width);
         let diff: usize = width - self.len();
-
         if diff == 0 {
             return self.to_vec();
         }
@@ -301,6 +297,7 @@ where
         let (lpad, rpad) = mode.left_right_padding(diff);
         let pad_type: &[T] = symbol.into();
 
+        let mut output: Vec<T> = Vec::with_capacity(width);
         (0..lpad).for_each(|_| output.extend_from_slice(pad_type));
         output.extend_from_slice(self);
         (0..rpad).for_each(|_| output.extend_from_slice(pad_type));
@@ -538,6 +535,130 @@ mod tests {
     fn pad_str_center_align_zero_even() {
         let output = "hejjj".pad(10, Alignment::Center, Symbol::Whitespace);
         let expected = "  hejjj   ".to_string();
+        assert_eq!(expected, output);
+    }
+
+    #[test]
+    fn str_truncate_left_uneven() {
+        let output = "kappa".pad(3, Alignment::Left, Symbol::Hyphen);
+        let expected = "kap".to_string();
+        assert_eq!(expected, output);
+    }
+
+    #[test]
+    fn str_truncate_left_even() {
+        let output = "kappa".pad(2, Alignment::Left, Symbol::Hyphen);
+        let expected = "ka".to_string();
+        assert_eq!(expected, output);
+    }
+
+    #[test]
+    fn str_truncate_right() {
+        let output = "kappa".pad(3, Alignment::Right, Symbol::Hyphen);
+        let expected = "ppa".to_string();
+        assert_eq!(expected, output);
+    }
+
+    #[test]
+    fn str_truncate_center_uneven() {
+        let output = "kappa".pad(3, Alignment::Center, Symbol::Hyphen);
+        let expected = "app".to_string();
+        assert_eq!(expected, output);
+    }
+
+    #[test]
+    fn str_truncate_center_even() {
+        let output = "kappa".pad(2, Alignment::Center, Symbol::Hyphen);
+        let expected = "ap".to_string();
+        assert_eq!(expected, output);
+    }
+
+    #[test]
+    fn str_no_pad_required() {
+        let output = "kappa".pad(5, Alignment::Right, Symbol::Hyphen);
+        let expected = "kappa".to_string();
+        assert_eq!(expected, output);
+    }
+
+    #[test]
+    fn slice_truncate_left() {
+        let output = vec![0u8, 1, 2, 3, 4]
+            .as_slice()
+            .pad(3, Alignment::Left, Symbol::Whitespace);
+        let expected = vec![0u8, 1, 2];
+        assert_eq!(expected, output);
+    }
+
+    #[test]
+    fn slice_truncate_right() {
+        let output =
+            vec![0u8, 1, 2, 3, 4, 5, 6]
+                .as_slice()
+                .pad(5, Alignment::Right, Symbol::Hyphen);
+        let expected = vec![2u8, 3, 4, 5, 6];
+        assert_eq!(expected, output);
+    }
+
+    #[test]
+    fn slice_truncate_center_uneven() {
+        let output = vec![0u8, 1, 2, 3, 4]
+            .as_slice()
+            .pad(3, Alignment::Center, Symbol::Whitespace);
+        let expected = vec![1u8, 2, 3];
+        assert_eq!(expected, output);
+    }
+
+    #[test]
+    fn slice_truncate_center_even() {
+        let output = vec![0u8, 1, 2, 3, 4]
+            .as_slice()
+            .pad(4, Alignment::Center, Symbol::Whitespace);
+        let expected = vec![0u8, 1, 2, 3];
+        assert_eq!(expected, output);
+    }
+
+    #[test]
+    fn vec_truncate_left() {
+        let output = vec![0u8, 1, 2, 3, 4].pad(3, Alignment::Left, Symbol::Whitespace);
+        let expected = vec![0u8, 1, 2];
+        assert_eq!(expected, output);
+    }
+
+    #[test]
+    fn vec_truncate_right() {
+        let output = vec![0u8, 1, 2, 3, 4, 5, 6].pad(5, Alignment::Right, Symbol::Hyphen);
+        let expected = vec![2u8, 3, 4, 5, 6];
+        assert_eq!(expected, output);
+    }
+
+    #[test]
+    fn vec_truncate_center_uneven() {
+        let output = vec![0u8, 1, 2, 3, 4].pad(3, Alignment::Center, Symbol::Whitespace);
+        let expected = vec![1u8, 2, 3];
+        assert_eq!(expected, output);
+    }
+
+    #[test]
+    fn vec_truncate_center_even() {
+        let output = vec![0u8, 1, 2, 3, 4].pad(4, Alignment::Center, Symbol::Whitespace);
+        let expected = vec![0u8, 1, 2, 3];
+        assert_eq!(expected, output);
+    }
+
+    #[test]
+    fn vec_pad_and_push_to_buffer_right_zero() {
+        let width: usize = 8;
+        let source = vec!['a', 'b', 'c', 'd', 'e'];
+        let mut buffer = Vec::with_capacity(width);
+        source.pad_and_push_to_buffer(width, Alignment::Right, Symbol::Zero, &mut buffer);
+        let expected = vec!['0', '0', '0', 'a', 'b', 'c', 'd', 'e'];
+        assert_eq!(expected, buffer);
+    }
+
+    #[test]
+    fn vec_no_pad_required() {
+        let output = vec![100u8, 14, 15, 98].pad(4, Alignment::Center, Symbol::Hyphen);
+        let expected = vec![100u8, 14, 15, 98];
         assert_eq!(expected, output);
     }
 }
