@@ -5,9 +5,17 @@ pub fn pad_and_push_to_buffer_wrapper_whitespace_10_center(c: &mut Criterion) {
     let width: usize = 10;
     let mut buffer: Vec<u8> = Vec::with_capacity(width);
     c.bench_function("pad&push wrapper ws 10 center", |b| {
-        b.iter(|| black_box({
-            pad_and_push_to_buffer("hej".as_bytes(), width, Alignment::Center, Symbol::Whitespace, &mut buffer);
-        }))
+        b.iter(|| {
+            black_box({
+                pad_and_push_to_buffer(
+                    "hej".as_bytes(),
+                    width,
+                    Alignment::Center,
+                    Symbol::Whitespace,
+                    &mut buffer,
+                );
+            })
+        })
     });
 }
 
@@ -15,9 +23,17 @@ pub fn pad_and_push_to_buffer_wrapper_whitespace_100_center(c: &mut Criterion) {
     let width: usize = 100;
     let mut buffer: Vec<u8> = Vec::with_capacity(width);
     c.bench_function("pad&push wrapper ws 100 center", |b| {
-        b.iter(|| black_box({
-            pad_and_push_to_buffer("uga78r9eguerbknma bba re7".as_bytes(), width, Alignment::Center, Symbol::Whitespace, &mut buffer);
-        }))
+        b.iter(|| {
+            black_box({
+                pad_and_push_to_buffer(
+                    "uga78r9eguerbknma bba re7".as_bytes(),
+                    width,
+                    Alignment::Center,
+                    Symbol::Whitespace,
+                    &mut buffer,
+                );
+            })
+        })
     });
 }
 

@@ -140,7 +140,7 @@ impl From<Symbol> for &[u8] {
 pub trait Source: fmt::Debug {
     type Buffer;
     type Output;
-    
+
     /// Slice the source to fit the target width and return it as the defined output type.
     ///
     /// This function is called whenever a call to [`pad`] is attempted but the
@@ -229,7 +229,7 @@ where
             Alignment::Right => self[(self.len() - width)..].to_vec(),
             Alignment::Center => {
                 self[(self.len() / 2 - width / 2)..(self.len() / 2 + width / 2)].to_vec()
-            },
+            }
         }
     }
 
@@ -256,12 +256,12 @@ where
     }
 
     fn pad_and_push_to_buffer(
-            &self,
-            width: usize,
-            mode: Alignment,
-            symbol: Symbol,
-            buffer: &mut Self::Buffer,
-        ) {
+        &self,
+        width: usize,
+        mode: Alignment,
+        symbol: Symbol,
+        buffer: &mut Self::Buffer,
+    ) {
         let padded: Self::Output = self.pad(width, mode, symbol);
         buffer.extend_from_slice(&padded);
     }
