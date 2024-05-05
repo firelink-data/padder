@@ -7,4 +7,5 @@ criterion_main! {
     benchmarks::pad_whitespace_rightalign::pads,
     benchmarks::pad_wrapper_hyphen_rightalign::pads,
     benchmarks::pad_wrapper_whitespace_leftalign::pads,
+    benchmarks::pad_and_push_to_buffer_wrapper_whitespace_center::pads,
 }
