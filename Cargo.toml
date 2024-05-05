@@ -1,6 +1,6 @@
 [package]
 name = "padder"
-version = "1.0.0"
+version = "1.1.0"
 edition = "2021"
 description = "Highly efficient data and string formatting library for Rust."
 authors = [

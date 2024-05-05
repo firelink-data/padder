@@ -174,9 +174,9 @@ where
         match mode {
             Alignment::Left => self[0..width].to_string(),
             Alignment::Right => self[(self.len() - width)..].to_string(),
-            Alignment::Center => {
-                self[(self.len() / 2 - width / 2)..(self.len() / 2 + width / 2 + width % 2)].to_string()
-            }
+            Alignment::Center => self
+                [(self.len() / 2 - width / 2)..(self.len() / 2 + width / 2 + width % 2)]
+                .to_string(),
         }
     }
 
@@ -226,9 +226,9 @@ where
         match mode {
             Alignment::Left => self[0..width].to_vec(),
             Alignment::Right => self[(self.len() - width)..].to_vec(),
-            Alignment::Center => {
-                self[(self.len() / 2 - width / 2)..(self.len() / 2 + width / 2 + width % 2)].to_vec()
-            }
+            Alignment::Center => self
+                [(self.len() / 2 - width / 2)..(self.len() / 2 + width / 2 + width % 2)]
+                .to_vec(),
         }
     }
 
@@ -278,9 +278,9 @@ where
         match mode {
             Alignment::Left => self[..width].to_vec(),
             Alignment::Right => self[(self.len() - width)..].to_vec(),
-            Alignment::Center => {
-                self[(self.len() / 2 - width / 2)..(self.len() / 2 + width / 2 + width % 2)].to_vec()
-            }
+            Alignment::Center => self
+                [(self.len() / 2 - width / 2)..(self.len() / 2 + width / 2 + width % 2)]
+                .to_vec(),
         }
     }
 
@@ -582,28 +582,37 @@ mod tests {
 
     #[test]
     fn slice_truncate_left() {
-        let output = vec![0u8, 1, 2, 3, 4].as_slice().pad(3, Alignment::Left, Symbol::Whitespace);
+        let output = vec![0u8, 1, 2, 3, 4]
+            .as_slice()
+            .pad(3, Alignment::Left, Symbol::Whitespace);
         let expected = vec![0u8, 1, 2];
         assert_eq!(expected, output);
     }
 
     #[test]
     fn slice_truncate_right() {
-        let output = vec![0u8, 1, 2, 3, 4, 5, 6].as_slice().pad(5, Alignment::Right, Symbol::Hyphen);
+        let output =
+            vec![0u8, 1, 2, 3, 4, 5, 6]
+                .as_slice()
+                .pad(5, Alignment::Right, Symbol::Hyphen);
         let expected = vec![2u8, 3, 4, 5, 6];
         assert_eq!(expected, output);
     }
 
     #[test]
     fn slice_truncate_center_uneven() {
-        let output = vec![0u8, 1, 2, 3, 4].as_slice().pad(3, Alignment::Center, Symbol::Whitespace);
+        let output = vec![0u8, 1, 2, 3, 4]
+            .as_slice()
+            .pad(3, Alignment::Center, Symbol::Whitespace);
         let expected = vec![1u8, 2, 3];
         assert_eq!(expected, output);
     }
 
     #[test]
     fn slice_truncate_center_even() {
-        let output = vec![0u8, 1, 2, 3, 4].as_slice().pad(4, Alignment::Center, Symbol::Whitespace);
+        let output = vec![0u8, 1, 2, 3, 4]
+            .as_slice()
+            .pad(4, Alignment::Center, Symbol::Whitespace);
         let expected = vec![0u8, 1, 2, 3];
         assert_eq!(expected, output);
     }
