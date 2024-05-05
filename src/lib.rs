@@ -22,7 +22,7 @@
 * SOFTWARE.
 *
 * File created: 2023-12-14
-* Last updated: 2023-12-19
+* Last updated: 2024-05-05
 */
 
 ///
@@ -47,6 +47,7 @@
 /// ```
 ///
 use std::clone;
+use std::fmt;
 
 /// Exhaustive enum for the alternative ways to pad and format data.
 #[derive(Debug, Clone, Copy)]
@@ -54,6 +55,17 @@ pub enum Alignment {
     Left,
     Right,
     Center,
+}
+
+impl Alignment {
+    /// Get amount of chars to pad on either side of the [`Source`].
+    pub fn left_right_padding(&self, diff: usize) -> (usize, usize) {
+        match self {
+            Self::Left => (0, diff),
+            Self::Right => (diff, 0),
+            Self::Center => (diff / 2, diff - diff / 2),
+        }
+    }
 }
 
 /// Exhaustive enum for the supported padding symbols.
@@ -125,14 +137,10 @@ impl From<Symbol> for &[u8] {
 ///
 /// Utilizing this trait has guaranteed performance improvements over the [`format!`] macro
 /// in the standard library, mainly due to only allocating memory on the heap once.
-pub trait Source {
+pub trait Source: fmt::Debug {
     type Buffer;
     type Output;
-
-    /// Pad the source, the caller type, to fit the target width.
-    ///
-    fn pad(&self, width: usize, mode: Alignment, symbol: Symbol) -> Self::Output;
-
+    
     /// Slice the source to fit the target width and return it as the defined output type.
     ///
     /// This function is called whenever a call to [`pad`] is attempted but the
@@ -140,7 +148,11 @@ pub trait Source {
     /// and may lead to data loss. This is logged to stdout whenever it occurs.
     fn slice_to_fit(&self, width: usize, mode: Alignment) -> Self::Output;
 
-    ///
+    /// Pad the source, the caller type, to fit the target width.
+    fn pad(&self, width: usize, mode: Alignment, symbol: Symbol) -> Self::Output;
+
+    /// Pad a buffer with the contents of source, to fit the target width.
+    /// Truncates the contents of source if width < source.len().
     fn pad_and_push_to_buffer(
         &self,
         width: usize,
@@ -180,12 +192,7 @@ where
             return self.to_string();
         }
 
-        let (lpad, rpad) = match mode {
-            Alignment::Left => (0, diff),
-            Alignment::Right => (diff, 0),
-            Alignment::Center => (diff / 2, diff - diff / 2),
-        };
-
+        let (lpad, rpad) = mode.left_right_padding(diff);
         let pad_char: char = symbol.into();
 
         (0..lpad).for_each(|_| output.push(pad_char));
@@ -207,10 +214,63 @@ where
     }
 }
 
+/// Trait implementation for a slice of types &[T].
+impl<T> Source for &[T]
+where
+    T: From<Symbol> + clone::Clone + fmt::Debug,
+    for<'a> &'a [T]: From<Symbol>,
+{
+    type Buffer = Vec<T>;
+    type Output = Vec<T>;
+
+    fn slice_to_fit(&self, width: usize, mode: Alignment) -> Self::Output {
+        match mode {
+            Alignment::Left => self[0..width].to_vec(),
+            Alignment::Right => self[(self.len() - width)..].to_vec(),
+            Alignment::Center => {
+                self[(self.len() / 2 - width / 2)..(self.len() / 2 + width / 2)].to_vec()
+            },
+        }
+    }
+
+    fn pad(&self, width: usize, mode: Alignment, symbol: Symbol) -> Self::Output {
+        if width < self.len() {
+            return self.slice_to_fit(width, mode);
+        }
+
+        let mut output: Vec<T> = Vec::with_capacity(width);
+        let diff: usize = width - self.len();
+
+        if diff == 0 {
+            return self.to_vec();
+        }
+
+        let (lpad, rpad) = mode.left_right_padding(diff);
+        let pad_type: &[T] = symbol.into();
+
+        (0..lpad).for_each(|_| output.extend_from_slice(pad_type));
+        output.extend_from_slice(self);
+        (0..rpad).for_each(|_| output.extend_from_slice(pad_type));
+
+        output
+    }
+
+    fn pad_and_push_to_buffer(
+            &self,
+            width: usize,
+            mode: Alignment,
+            symbol: Symbol,
+            buffer: &mut Self::Buffer,
+        ) {
+        let padded: Self::Output = self.pad(width, mode, symbol);
+        buffer.extend_from_slice(&padded);
+    }
+}
+
 /// Trait implementation for a Vec<T> with support for both T and &[T] trait bounds.
 impl<T> Source for Vec<T>
 where
-    T: From<Symbol> + clone::Clone,
+    T: From<Symbol> + clone::Clone + fmt::Debug,
     for<'a> &'a [T]: From<Symbol>,
 {
     type Buffer = Vec<T>;
@@ -238,17 +298,12 @@ where
             return self.to_vec();
         }
 
-        let (lpad, rpad) = match mode {
-            Alignment::Left => (0, diff),
-            Alignment::Right => (diff, 0),
-            Alignment::Center => (diff / 2, diff - diff / 2),
-        };
+        let (lpad, rpad) = mode.left_right_padding(diff);
+        let pad_type: &[T] = symbol.into();
 
-        let pad_byte: &[T] = symbol.into();
-
-        (0..lpad).for_each(|_| output.extend_from_slice(pad_byte));
+        (0..lpad).for_each(|_| output.extend_from_slice(pad_type));
         output.extend_from_slice(self);
-        (0..rpad).for_each(|_| output.extend_from_slice(pad_byte));
+        (0..rpad).for_each(|_| output.extend_from_slice(pad_type));
 
         output
     }
@@ -284,6 +339,26 @@ pub fn pad_and_push_to_buffer<S: Source>(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn wrapper_pad_slice_byte_left_align_zero() {
+        let width: usize = 200;
+        let mut output: Vec<u8> = Vec::with_capacity(width);
+        pad_and_push_to_buffer(
+            "aeirjgjkadmval,mr1873481 y uhaegr".as_bytes(),
+            width,
+            Alignment::Left,
+            Symbol::Zero,
+            &mut output,
+        );
+
+        let mut expected = String::from("aeirjgjkadmval,mr1873481 y uhaegr");
+        (0..(width - expected.len())).for_each(|_| expected.push_str("0"));
+
+        assert_eq!(expected.as_bytes(), output);
+        assert_ne!(expected.capacity(), output.capacity());
+        assert_eq!(width, output.capacity());
+    }
 
     #[test]
     fn wrapper_pad_vec_char_left_align_zero() {
