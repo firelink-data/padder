@@ -1,6 +1,6 @@
 [package]
 name = "padder"
-version = "1.1.0"
+version = "1.2.0"
 edition = "2021"
 description = "Highly efficient data and string formatting library for Rust."
 authors = [
@@ -29,9 +29,15 @@ crate-type = [ "lib" ]
 [dependencies]
 env_logger = "0.11.0"
 log = "0.4.20"
+serde = { version = "1.0.201", features = ["derive"], optional = true }
+serde_json = { version = "1.0.117", optional = true }
 
 [dev-dependencies]
 criterion = "0.5.1"
+
+[features]
+default = []
+serde = [ "dep:serde", "dep:serde_json" ]
 
 [[bench]]
 name = "bench_main"
