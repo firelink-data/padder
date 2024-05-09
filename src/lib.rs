@@ -1393,6 +1393,22 @@ mod tests {
     }
 
     #[test]
+    fn pad_whitespace_from_char_slice() {
+        let width: usize = 4;
+        let source: &[char] = &['a', 'b', 'c'];
+        let mut buffer: Vec<char> = Vec::with_capacity(width);
+        pad_and_push_to_buffer(
+            source,
+            width,
+            Alignment::Center,
+            Symbol::Whitespace,
+            &mut buffer,
+        );
+        let expected = Vec::from(&['a', 'b', 'c', ' ']);
+        assert_eq!(expected, buffer);
+    }
+
+    #[test]
     fn wrapper_pad_slice_byte_left_align_zero() {
         let width: usize = 200;
         let mut output: Vec<u8> = Vec::with_capacity(width);
