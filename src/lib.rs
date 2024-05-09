@@ -62,7 +62,7 @@
 //! ```
 //!
 //! You can also pad to an existing buffer, providing you precise control over any memory
-//! allocations performed in your program. Given the below char slice and target pad 
+//! allocations performed in your program. Given the below char slice and target pad
 //! width 10, with [`Alignment::Right`] and [`Symbol::Hashtag`], the resulting contents
 //! of the allocated buffer can be seen on the right:
 //!
@@ -482,6 +482,156 @@ pub fn pad_and_push_to_buffer<S: Source>(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn pad_underscore_from_char() {
+        let width: usize = 4;
+        let source: &[char] = &['a', 'b', 'c'];
+        let mut buffer: Vec<char> = Vec::with_capacity(width);
+        pad_and_push_to_buffer(source, width, Alignment::Center, Symbol::Underscore, &mut buffer);
+        let expected = Vec::from(&['a', 'b', 'c', '_']);
+        assert_eq!(expected, buffer);
+    }
+
+    #[test]
+    fn pad_underscore_from_byte() {
+        let width: usize = 4;
+        let source: &[u8] = &[1u8, 2, 3];
+        let mut buffer: Vec<u8> = Vec::with_capacity(width);
+        pad_and_push_to_buffer(source, width, Alignment::Center, Symbol::Underscore, &mut buffer);
+        let expected = Vec::from(&[1u8, 2, 3, Symbol::Underscore.into()]);
+        assert_eq!(expected, buffer);
+    }
+
+    #[test]
+    fn pad_dot_from_char() {
+        let width: usize = 4;
+        let source: &[char] = &['a', 'b', 'c'];
+        let mut buffer: Vec<char> = Vec::with_capacity(width);
+        pad_and_push_to_buffer(source, width, Alignment::Center, Symbol::Dot, &mut buffer);
+        let expected = Vec::from(&['a', 'b', 'c', '.']);
+        assert_eq!(expected, buffer);
+    }
+
+    #[test]
+    fn pad_comma_from_char() {
+        let width: usize = 4;
+        let source: &[char] = &['a', 'b', 'c'];
+        let mut buffer: Vec<char> = Vec::with_capacity(width);
+        pad_and_push_to_buffer(source, width, Alignment::Center, Symbol::Comma, &mut buffer);
+        let expected = Vec::from(&['a', 'b', 'c', ',']);
+        assert_eq!(expected, buffer);
+    }
+
+    #[test]
+    fn pad_colon_from_char() {
+        let width: usize = 4;
+        let source: &[char] = &['a', 'b', 'c'];
+        let mut buffer: Vec<char> = Vec::with_capacity(width);
+        pad_and_push_to_buffer(source, width, Alignment::Center, Symbol::Colon, &mut buffer);
+        let expected = Vec::from(&['a', 'b', 'c', ':']);
+        assert_eq!(expected, buffer);
+    }
+
+    #[test]
+    fn pad_semicolon_from_char() {
+        let width: usize = 4;
+        let source: &[char] = &['a', 'b', 'c'];
+        let mut buffer: Vec<char> = Vec::with_capacity(width);
+        pad_and_push_to_buffer(source, width, Alignment::Center, Symbol::Semicolon, &mut buffer);
+        let expected = Vec::from(&['a', 'b', 'c', ';']);
+        assert_eq!(expected, buffer);
+    }
+
+    #[test]
+    fn pad_hashtag_from_char() {
+        let width: usize = 4;
+        let source: &[char] = &['a', 'b', 'c'];
+        let mut buffer: Vec<char> = Vec::with_capacity(width);
+        pad_and_push_to_buffer(source, width, Alignment::Center, Symbol::Hashtag, &mut buffer);
+        let expected = Vec::from(&['a', 'b', 'c', '#']);
+        assert_eq!(expected, buffer);
+    }
+
+    #[test]
+    fn pad_backslash_from_char() {
+        let width: usize = 4;
+        let source: &[char] = &['a', 'b', 'c'];
+        let mut buffer: Vec<char> = Vec::with_capacity(width);
+        pad_and_push_to_buffer(source, width, Alignment::Center, Symbol::Backslash, &mut buffer);
+        let expected = Vec::from(&['a', 'b', 'c', '\\']);
+        assert_eq!(expected, buffer);
+    }
+
+    #[test]
+    fn pad_forwardslash_from_char() {
+        let width: usize = 4;
+        let source: &[char] = &['a', 'b', 'c'];
+        let mut buffer: Vec<char> = Vec::with_capacity(width);
+        pad_and_push_to_buffer(source, width, Alignment::Center, Symbol::Forwardslash, &mut buffer);
+        let expected = Vec::from(&['a', 'b', 'c', '/']);
+        assert_eq!(expected, buffer);
+    }
+
+    #[test]
+    fn pad_asterisk_from_char() {
+        let width: usize = 4;
+        let source: &[char] = &['a', 'b', 'c'];
+        let mut buffer: Vec<char> = Vec::with_capacity(width);
+        pad_and_push_to_buffer(source, width, Alignment::Center, Symbol::Asterisk, &mut buffer);
+        let expected = Vec::from(&['a', 'b', 'c', '*']);
+        assert_eq!(expected, buffer);
+    }
+
+    #[test]
+    fn pad_one_from_char() {
+        let width: usize = 4;
+        let source: &[char] = &['a', 'b', 'c'];
+        let mut buffer: Vec<char> = Vec::with_capacity(width);
+        pad_and_push_to_buffer(source, width, Alignment::Center, Symbol::One, &mut buffer);
+        let expected = Vec::from(&['a', 'b', 'c', '1']);
+        assert_eq!(expected, buffer);
+    }
+
+    #[test]
+    fn pad_two_from_char() {
+        let width: usize = 4;
+        let source: &[char] = &['a', 'b', 'c'];
+        let mut buffer: Vec<char> = Vec::with_capacity(width);
+        pad_and_push_to_buffer(source, width, Alignment::Center, Symbol::Two, &mut buffer);
+        let expected = Vec::from(&['a', 'b', 'c', '2']);
+        assert_eq!(expected, buffer);
+    }
+
+    #[test]
+    fn pad_three_from_char() {
+        let width: usize = 4;
+        let source: &[char] = &['a', 'b', 'c'];
+        let mut buffer: Vec<char> = Vec::with_capacity(width);
+        pad_and_push_to_buffer(source, width, Alignment::Center, Symbol::Three, &mut buffer);
+        let expected = Vec::from(&['a', 'b', 'c', '3']);
+        assert_eq!(expected, buffer);
+    }
+
+    #[test]
+    fn pad_four_from_char() {
+        let width: usize = 4;
+        let source: &[char] = &['a', 'b', 'c'];
+        let mut buffer: Vec<char> = Vec::with_capacity(width);
+        pad_and_push_to_buffer(source, width, Alignment::Center, Symbol::Four, &mut buffer);
+        let expected = Vec::from(&['a', 'b', 'c', '4']);
+        assert_eq!(expected, buffer);
+    }
+
+    #[test]
+    fn pad_five_from_char() {
+        let width: usize = 4;
+        let source: &[char] = &['a', 'b', 'c'];
+        let mut buffer: Vec<char> = Vec::with_capacity(width);
+        pad_and_push_to_buffer(source, width, Alignment::Center, Symbol::Five, &mut buffer);
+        let expected = Vec::from(&['a', 'b', 'c', '5']);
+        assert_eq!(expected, buffer);
+    }
 
     #[test]
     fn wrapper_pad_slice_byte_left_align_zero() {
