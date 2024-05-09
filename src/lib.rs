@@ -488,7 +488,13 @@ mod tests {
         let width: usize = 4;
         let source: &[char] = &['a', 'b', 'c'];
         let mut buffer: Vec<char> = Vec::with_capacity(width);
-        pad_and_push_to_buffer(source, width, Alignment::Center, Symbol::Underscore, &mut buffer);
+        pad_and_push_to_buffer(
+            source,
+            width,
+            Alignment::Center,
+            Symbol::Underscore,
+            &mut buffer,
+        );
         let expected = Vec::from(&['a', 'b', 'c', '_']);
         assert_eq!(expected, buffer);
     }
@@ -498,7 +504,13 @@ mod tests {
         let width: usize = 4;
         let source: &[u8] = &[1u8, 2, 3];
         let mut buffer: Vec<u8> = Vec::with_capacity(width);
-        pad_and_push_to_buffer(source, width, Alignment::Center, Symbol::Underscore, &mut buffer);
+        pad_and_push_to_buffer(
+            source,
+            width,
+            Alignment::Center,
+            Symbol::Underscore,
+            &mut buffer,
+        );
         let expected = Vec::from(&[1u8, 2, 3, Symbol::Underscore.into()]);
         assert_eq!(expected, buffer);
     }
@@ -508,7 +520,13 @@ mod tests {
         let width: usize = 4;
         let source: &str = "abc";
         let mut buffer = String::new();
-        pad_and_push_to_buffer(source, width, Alignment::Center, Symbol::Underscore, &mut buffer);
+        pad_and_push_to_buffer(
+            source,
+            width,
+            Alignment::Center,
+            Symbol::Underscore,
+            &mut buffer,
+        );
         let expected = String::from("abc_");
         assert_eq!(expected, buffer);
     }
@@ -518,13 +536,20 @@ mod tests {
         let width: usize = 4;
         let source = Vec::from(&[1u8, 2]);
         let mut buffer: Vec<u8> = Vec::with_capacity(width);
-        pad_and_push_to_buffer(source, width, Alignment::Center, Symbol::Underscore, &mut buffer);
-        let expected: Vec<u8> = Vec::from(&[Symbol::Underscore.into(), 1, 2, Symbol::Underscore.into()]);
+        pad_and_push_to_buffer(
+            source,
+            width,
+            Alignment::Center,
+            Symbol::Underscore,
+            &mut buffer,
+        );
+        let expected: Vec<u8> =
+            Vec::from(&[Symbol::Underscore.into(), 1, 2, Symbol::Underscore.into()]);
         assert_eq!(expected, buffer);
     }
 
     #[test]
-    fn pad_dot_from_char() {
+    fn pad_dot_from_char_slice() {
         let width: usize = 4;
         let source: &[char] = &['a', 'b', 'c'];
         let mut buffer: Vec<char> = Vec::with_capacity(width);
@@ -534,7 +559,37 @@ mod tests {
     }
 
     #[test]
-    fn pad_comma_from_char() {
+    fn pad_dot_from_byte_slice() {
+        let width: usize = 4;
+        let source: &[u8] = &[1u8, 2, 3];
+        let mut buffer: Vec<u8> = Vec::with_capacity(width);
+        pad_and_push_to_buffer(source, width, Alignment::Center, Symbol::Dot, &mut buffer);
+        let expected = Vec::from(&[1u8, 2, 3, Symbol::Dot.into()]);
+        assert_eq!(expected, buffer);
+    }
+
+    #[test]
+    fn pad_dot_from_char() {
+        let width: usize = 4;
+        let source: &str = "abc";
+        let mut buffer = String::new();
+        pad_and_push_to_buffer(source, width, Alignment::Center, Symbol::Dot, &mut buffer);
+        let expected = String::from("abc.");
+        assert_eq!(expected, buffer);
+    }
+
+    #[test]
+    fn pad_dot_from_byte() {
+        let width: usize = 4;
+        let source = Vec::from(&[1u8, 2]);
+        let mut buffer: Vec<u8> = Vec::with_capacity(width);
+        pad_and_push_to_buffer(source, width, Alignment::Center, Symbol::Dot, &mut buffer);
+        let expected: Vec<u8> = Vec::from(&[Symbol::Dot.into(), 1, 2, Symbol::Dot.into()]);
+        assert_eq!(expected, buffer);
+    }
+
+    #[test]
+    fn pad_comma_from_char_slice() {
         let width: usize = 4;
         let source: &[char] = &['a', 'b', 'c'];
         let mut buffer: Vec<char> = Vec::with_capacity(width);
@@ -544,7 +599,37 @@ mod tests {
     }
 
     #[test]
-    fn pad_colon_from_char() {
+    fn pad_comma_from_byte_slice() {
+        let width: usize = 4;
+        let source: &[u8] = &[1u8, 2, 3];
+        let mut buffer: Vec<u8> = Vec::with_capacity(width);
+        pad_and_push_to_buffer(source, width, Alignment::Center, Symbol::Comma, &mut buffer);
+        let expected = Vec::from(&[1u8, 2, 3, Symbol::Comma.into()]);
+        assert_eq!(expected, buffer);
+    }
+
+    #[test]
+    fn pad_comma_from_char() {
+        let width: usize = 4;
+        let source: &str = "abc";
+        let mut buffer = String::new();
+        pad_and_push_to_buffer(source, width, Alignment::Center, Symbol::Comma, &mut buffer);
+        let expected = String::from("abc,");
+        assert_eq!(expected, buffer);
+    }
+
+    #[test]
+    fn pad_comma_from_byte() {
+        let width: usize = 4;
+        let source = Vec::from(&[1u8, 2]);
+        let mut buffer: Vec<u8> = Vec::with_capacity(width);
+        pad_and_push_to_buffer(source, width, Alignment::Center, Symbol::Comma, &mut buffer);
+        let expected: Vec<u8> = Vec::from(&[Symbol::Comma.into(), 1, 2, Symbol::Comma.into()]);
+        assert_eq!(expected, buffer);
+    }
+
+    #[test]
+    fn pad_colon_from_char_slice() {
         let width: usize = 4;
         let source: &[char] = &['a', 'b', 'c'];
         let mut buffer: Vec<char> = Vec::with_capacity(width);
@@ -554,57 +639,365 @@ mod tests {
     }
 
     #[test]
-    fn pad_semicolon_from_char() {
+    fn pad_colon_from_byte_slice() {
+        let width: usize = 4;
+        let source: &[u8] = &[1u8, 2, 3];
+        let mut buffer: Vec<u8> = Vec::with_capacity(width);
+        pad_and_push_to_buffer(source, width, Alignment::Center, Symbol::Colon, &mut buffer);
+        let expected = Vec::from(&[1u8, 2, 3, Symbol::Colon.into()]);
+        assert_eq!(expected, buffer);
+    }
+
+    #[test]
+    fn pad_colon_from_char() {
+        let width: usize = 4;
+        let source: &str = "abc";
+        let mut buffer = String::new();
+        pad_and_push_to_buffer(source, width, Alignment::Right, Symbol::Colon, &mut buffer);
+        let expected = String::from(":abc");
+        assert_eq!(expected, buffer);
+    }
+
+    #[test]
+    fn pad_colon_from_byte() {
+        let width: usize = 4;
+        let source = Vec::from(&[1u8, 2]);
+        let mut buffer: Vec<u8> = Vec::with_capacity(width);
+        pad_and_push_to_buffer(source, width, Alignment::Center, Symbol::Colon, &mut buffer);
+        let expected: Vec<u8> = Vec::from(&[Symbol::Colon.into(), 1, 2, Symbol::Colon.into()]);
+        assert_eq!(expected, buffer);
+    }
+
+    #[test]
+    fn pad_semicolon_from_char_slice() {
         let width: usize = 4;
         let source: &[char] = &['a', 'b', 'c'];
         let mut buffer: Vec<char> = Vec::with_capacity(width);
-        pad_and_push_to_buffer(source, width, Alignment::Center, Symbol::Semicolon, &mut buffer);
+        pad_and_push_to_buffer(
+            source,
+            width,
+            Alignment::Center,
+            Symbol::Semicolon,
+            &mut buffer,
+        );
         let expected = Vec::from(&['a', 'b', 'c', ';']);
+        assert_eq!(expected, buffer);
+    }
+
+    #[test]
+    fn pad_semicolon_from_byte_slice() {
+        let width: usize = 4;
+        let source: &[u8] = &[1u8, 2, 3];
+        let mut buffer: Vec<u8> = Vec::with_capacity(width);
+        pad_and_push_to_buffer(
+            source,
+            width,
+            Alignment::Center,
+            Symbol::Semicolon,
+            &mut buffer,
+        );
+        let expected = Vec::from(&[1u8, 2, 3, Symbol::Semicolon.into()]);
+        assert_eq!(expected, buffer);
+    }
+
+    #[test]
+    fn pad_semicolon_from_char() {
+        let width: usize = 4;
+        let source: &str = "abc";
+        let mut buffer = String::new();
+        pad_and_push_to_buffer(
+            source,
+            width,
+            Alignment::Right,
+            Symbol::Semicolon,
+            &mut buffer,
+        );
+        let expected = String::from(";abc");
+        assert_eq!(expected, buffer);
+    }
+
+    #[test]
+    fn pad_semicolon_from_byte() {
+        let width: usize = 4;
+        let source = Vec::from(&[1u8, 2]);
+        let mut buffer: Vec<u8> = Vec::with_capacity(width);
+        pad_and_push_to_buffer(
+            source,
+            width,
+            Alignment::Center,
+            Symbol::Semicolon,
+            &mut buffer,
+        );
+        let expected: Vec<u8> =
+            Vec::from(&[Symbol::Semicolon.into(), 1, 2, Symbol::Semicolon.into()]);
+        assert_eq!(expected, buffer);
+    }
+
+    #[test]
+    fn pad_hashtag_from_char_slice() {
+        let width: usize = 4;
+        let source: &[char] = &['a', 'b', 'c'];
+        let mut buffer: Vec<char> = Vec::with_capacity(width);
+        pad_and_push_to_buffer(
+            source,
+            width,
+            Alignment::Center,
+            Symbol::Hashtag,
+            &mut buffer,
+        );
+        let expected = Vec::from(&['a', 'b', 'c', '#']);
+        assert_eq!(expected, buffer);
+    }
+
+    #[test]
+    fn pad_hashtag_from_byte_slice() {
+        let width: usize = 4;
+        let source: &[u8] = &[1u8, 2, 3];
+        let mut buffer: Vec<u8> = Vec::with_capacity(width);
+        pad_and_push_to_buffer(
+            source,
+            width,
+            Alignment::Center,
+            Symbol::Hashtag,
+            &mut buffer,
+        );
+        let expected = Vec::from(&[1u8, 2, 3, Symbol::Hashtag.into()]);
         assert_eq!(expected, buffer);
     }
 
     #[test]
     fn pad_hashtag_from_char() {
         let width: usize = 4;
+        let source: &str = "abc";
+        let mut buffer = String::new();
+        pad_and_push_to_buffer(
+            source,
+            width,
+            Alignment::Right,
+            Symbol::Hashtag,
+            &mut buffer,
+        );
+        let expected = String::from("#abc");
+        assert_eq!(expected, buffer);
+    }
+
+    #[test]
+    fn pad_hashtag_from_byte() {
+        let width: usize = 4;
+        let source = Vec::from(&[1u8, 2]);
+        let mut buffer: Vec<u8> = Vec::with_capacity(width);
+        pad_and_push_to_buffer(
+            source,
+            width,
+            Alignment::Center,
+            Symbol::Hashtag,
+            &mut buffer,
+        );
+        let expected: Vec<u8> = Vec::from(&[Symbol::Hashtag.into(), 1, 2, Symbol::Hashtag.into()]);
+        assert_eq!(expected, buffer);
+    }
+
+    #[test]
+    fn pad_backslash_from_char_slice() {
+        let width: usize = 4;
         let source: &[char] = &['a', 'b', 'c'];
         let mut buffer: Vec<char> = Vec::with_capacity(width);
-        pad_and_push_to_buffer(source, width, Alignment::Center, Symbol::Hashtag, &mut buffer);
-        let expected = Vec::from(&['a', 'b', 'c', '#']);
+        pad_and_push_to_buffer(
+            source,
+            width,
+            Alignment::Center,
+            Symbol::Backslash,
+            &mut buffer,
+        );
+        let expected = Vec::from(&['a', 'b', 'c', '\\']);
+        assert_eq!(expected, buffer);
+    }
+
+    #[test]
+    fn pad_backslash_from_byte_slice() {
+        let width: usize = 4;
+        let source: &[u8] = &[1u8, 2, 3];
+        let mut buffer: Vec<u8> = Vec::with_capacity(width);
+        pad_and_push_to_buffer(
+            source,
+            width,
+            Alignment::Center,
+            Symbol::Backslash,
+            &mut buffer,
+        );
+        let expected = Vec::from(&[1u8, 2, 3, Symbol::Backslash.into()]);
         assert_eq!(expected, buffer);
     }
 
     #[test]
     fn pad_backslash_from_char() {
         let width: usize = 4;
+        let source: &str = "abc";
+        let mut buffer = String::new();
+        pad_and_push_to_buffer(
+            source,
+            width,
+            Alignment::Right,
+            Symbol::Backslash,
+            &mut buffer,
+        );
+        let expected = String::from("\\abc");
+        assert_eq!(expected, buffer);
+    }
+
+    #[test]
+    fn pad_backslash_from_byte() {
+        let width: usize = 4;
+        let source = Vec::from(&[1u8, 2]);
+        let mut buffer: Vec<u8> = Vec::with_capacity(width);
+        pad_and_push_to_buffer(
+            source,
+            width,
+            Alignment::Center,
+            Symbol::Backslash,
+            &mut buffer,
+        );
+        let expected: Vec<u8> =
+            Vec::from(&[Symbol::Backslash.into(), 1, 2, Symbol::Backslash.into()]);
+        assert_eq!(expected, buffer);
+    }
+
+    #[test]
+    fn pad_forwardslash_from_char_slice() {
+        let width: usize = 4;
         let source: &[char] = &['a', 'b', 'c'];
         let mut buffer: Vec<char> = Vec::with_capacity(width);
-        pad_and_push_to_buffer(source, width, Alignment::Center, Symbol::Backslash, &mut buffer);
-        let expected = Vec::from(&['a', 'b', 'c', '\\']);
+        pad_and_push_to_buffer(
+            source,
+            width,
+            Alignment::Center,
+            Symbol::Forwardslash,
+            &mut buffer,
+        );
+        let expected = Vec::from(&['a', 'b', 'c', '/']);
+        assert_eq!(expected, buffer);
+    }
+
+    #[test]
+    fn pad_forwardslash_from_byte_slice() {
+        let width: usize = 4;
+        let source: &[u8] = &[1u8, 2, 3];
+        let mut buffer: Vec<u8> = Vec::with_capacity(width);
+        pad_and_push_to_buffer(
+            source,
+            width,
+            Alignment::Center,
+            Symbol::Forwardslash,
+            &mut buffer,
+        );
+        let expected = Vec::from(&[1u8, 2, 3, Symbol::Forwardslash.into()]);
         assert_eq!(expected, buffer);
     }
 
     #[test]
     fn pad_forwardslash_from_char() {
         let width: usize = 4;
+        let source: &str = "abc";
+        let mut buffer = String::new();
+        pad_and_push_to_buffer(
+            source,
+            width,
+            Alignment::Right,
+            Symbol::Forwardslash,
+            &mut buffer,
+        );
+        let expected = String::from("/abc");
+        assert_eq!(expected, buffer);
+    }
+
+    #[test]
+    fn pad_forwardslash_from_byte() {
+        let width: usize = 4;
+        let source = Vec::from(&[1u8, 2]);
+        let mut buffer: Vec<u8> = Vec::with_capacity(width);
+        pad_and_push_to_buffer(
+            source,
+            width,
+            Alignment::Center,
+            Symbol::Forwardslash,
+            &mut buffer,
+        );
+        let expected: Vec<u8> = Vec::from(&[
+            Symbol::Forwardslash.into(),
+            1,
+            2,
+            Symbol::Forwardslash.into(),
+        ]);
+        assert_eq!(expected, buffer);
+    }
+
+    #[test]
+    fn pad_asterisk_from_char_slice() {
+        let width: usize = 4;
         let source: &[char] = &['a', 'b', 'c'];
         let mut buffer: Vec<char> = Vec::with_capacity(width);
-        pad_and_push_to_buffer(source, width, Alignment::Center, Symbol::Forwardslash, &mut buffer);
-        let expected = Vec::from(&['a', 'b', 'c', '/']);
+        pad_and_push_to_buffer(
+            source,
+            width,
+            Alignment::Center,
+            Symbol::Asterisk,
+            &mut buffer,
+        );
+        let expected = Vec::from(&['a', 'b', 'c', '*']);
+        assert_eq!(expected, buffer);
+    }
+
+    #[test]
+    fn pad_asterisk_from_byte_slice() {
+        let width: usize = 4;
+        let source: &[u8] = &[1u8, 2, 3];
+        let mut buffer: Vec<u8> = Vec::with_capacity(width);
+        pad_and_push_to_buffer(
+            source,
+            width,
+            Alignment::Center,
+            Symbol::Asterisk,
+            &mut buffer,
+        );
+        let expected = Vec::from(&[1u8, 2, 3, Symbol::Asterisk.into()]);
         assert_eq!(expected, buffer);
     }
 
     #[test]
     fn pad_asterisk_from_char() {
         let width: usize = 4;
-        let source: &[char] = &['a', 'b', 'c'];
-        let mut buffer: Vec<char> = Vec::with_capacity(width);
-        pad_and_push_to_buffer(source, width, Alignment::Center, Symbol::Asterisk, &mut buffer);
-        let expected = Vec::from(&['a', 'b', 'c', '*']);
+        let source: &str = "abc";
+        let mut buffer = String::new();
+        pad_and_push_to_buffer(
+            source,
+            width,
+            Alignment::Right,
+            Symbol::Asterisk,
+            &mut buffer,
+        );
+        let expected = String::from("*abc");
         assert_eq!(expected, buffer);
     }
 
     #[test]
-    fn pad_one_from_char() {
+    fn pad_asterisk_from_byte() {
+        let width: usize = 4;
+        let source = Vec::from(&[1u8, 2]);
+        let mut buffer: Vec<u8> = Vec::with_capacity(width);
+        pad_and_push_to_buffer(
+            source,
+            width,
+            Alignment::Center,
+            Symbol::Asterisk,
+            &mut buffer,
+        );
+        let expected: Vec<u8> =
+            Vec::from(&[Symbol::Asterisk.into(), 1, 2, Symbol::Asterisk.into()]);
+        assert_eq!(expected, buffer);
+    }
+
+    #[test]
+    fn pad_one_from_char_slice() {
         let width: usize = 4;
         let source: &[char] = &['a', 'b', 'c'];
         let mut buffer: Vec<char> = Vec::with_capacity(width);
@@ -614,7 +1007,37 @@ mod tests {
     }
 
     #[test]
-    fn pad_two_from_char() {
+    fn pad_one_from_byte_slice() {
+        let width: usize = 4;
+        let source: &[u8] = &[1u8, 2, 3];
+        let mut buffer: Vec<u8> = Vec::with_capacity(width);
+        pad_and_push_to_buffer(source, width, Alignment::Center, Symbol::One, &mut buffer);
+        let expected = Vec::from(&[1u8, 2, 3, Symbol::One.into()]);
+        assert_eq!(expected, buffer);
+    }
+
+    #[test]
+    fn pad_one_from_char() {
+        let width: usize = 4;
+        let source: &str = "abc";
+        let mut buffer = String::new();
+        pad_and_push_to_buffer(source, width, Alignment::Right, Symbol::One, &mut buffer);
+        let expected = String::from("1abc");
+        assert_eq!(expected, buffer);
+    }
+
+    #[test]
+    fn pad_one_from_byte() {
+        let width: usize = 4;
+        let source = Vec::from(&[1u8, 2]);
+        let mut buffer: Vec<u8> = Vec::with_capacity(width);
+        pad_and_push_to_buffer(source, width, Alignment::Center, Symbol::One, &mut buffer);
+        let expected: Vec<u8> = Vec::from(&[Symbol::One.into(), 1, 2, Symbol::One.into()]);
+        assert_eq!(expected, buffer);
+    }
+
+    #[test]
+    fn pad_two_from_char_slice() {
         let width: usize = 4;
         let source: &[char] = &['a', 'b', 'c'];
         let mut buffer: Vec<char> = Vec::with_capacity(width);
@@ -624,7 +1047,37 @@ mod tests {
     }
 
     #[test]
-    fn pad_three_from_char() {
+    fn pad_two_from_byte_slice() {
+        let width: usize = 4;
+        let source: &[u8] = &[1u8, 2, 3];
+        let mut buffer: Vec<u8> = Vec::with_capacity(width);
+        pad_and_push_to_buffer(source, width, Alignment::Center, Symbol::Two, &mut buffer);
+        let expected = Vec::from(&[1u8, 2, 3, Symbol::Two.into()]);
+        assert_eq!(expected, buffer);
+    }
+
+    #[test]
+    fn pad_two_from_char() {
+        let width: usize = 6;
+        let source: &str = "abc";
+        let mut buffer = String::new();
+        pad_and_push_to_buffer(source, width, Alignment::Right, Symbol::Two, &mut buffer);
+        let expected = String::from("222abc");
+        assert_eq!(expected, buffer);
+    }
+
+    #[test]
+    fn pad_two_from_byte() {
+        let width: usize = 4;
+        let source = Vec::from(&[1u8, 2]);
+        let mut buffer: Vec<u8> = Vec::with_capacity(width);
+        pad_and_push_to_buffer(source, width, Alignment::Center, Symbol::Two, &mut buffer);
+        let expected: Vec<u8> = Vec::from(&[Symbol::Two.into(), 1, 2, Symbol::Two.into()]);
+        assert_eq!(expected, buffer);
+    }
+
+    #[test]
+    fn pad_three_from_char_slice() {
         let width: usize = 4;
         let source: &[char] = &['a', 'b', 'c'];
         let mut buffer: Vec<char> = Vec::with_capacity(width);
@@ -634,7 +1087,37 @@ mod tests {
     }
 
     #[test]
-    fn pad_four_from_char() {
+    fn pad_three_from_byte_slice() {
+        let width: usize = 4;
+        let source: &[u8] = &[1u8, 2, 3];
+        let mut buffer: Vec<u8> = Vec::with_capacity(width);
+        pad_and_push_to_buffer(source, width, Alignment::Center, Symbol::Three, &mut buffer);
+        let expected = Vec::from(&[1u8, 2, 3, Symbol::Three.into()]);
+        assert_eq!(expected, buffer);
+    }
+
+    #[test]
+    fn pad_three_from_char() {
+        let width: usize = 6;
+        let source: &str = "abc";
+        let mut buffer = String::new();
+        pad_and_push_to_buffer(source, width, Alignment::Right, Symbol::Three, &mut buffer);
+        let expected = String::from("333abc");
+        assert_eq!(expected, buffer);
+    }
+
+    #[test]
+    fn pad_three_from_byte() {
+        let width: usize = 4;
+        let source = Vec::from(&[1u8, 2]);
+        let mut buffer: Vec<u8> = Vec::with_capacity(width);
+        pad_and_push_to_buffer(source, width, Alignment::Center, Symbol::Three, &mut buffer);
+        let expected: Vec<u8> = Vec::from(&[Symbol::Three.into(), 1, 2, Symbol::Three.into()]);
+        assert_eq!(expected, buffer);
+    }
+
+    #[test]
+    fn pad_four_from_char_slice() {
         let width: usize = 4;
         let source: &[char] = &['a', 'b', 'c'];
         let mut buffer: Vec<char> = Vec::with_capacity(width);
@@ -644,12 +1127,268 @@ mod tests {
     }
 
     #[test]
-    fn pad_five_from_char() {
+    fn pad_four_from_byte_slice() {
+        let width: usize = 4;
+        let source: &[u8] = &[1u8, 2, 3];
+        let mut buffer: Vec<u8> = Vec::with_capacity(width);
+        pad_and_push_to_buffer(source, width, Alignment::Center, Symbol::Four, &mut buffer);
+        let expected = Vec::from(&[1u8, 2, 3, Symbol::Four.into()]);
+        assert_eq!(expected, buffer);
+    }
+
+    #[test]
+    fn pad_four_from_char() {
+        let width: usize = 6;
+        let source: &str = "abc";
+        let mut buffer = String::new();
+        pad_and_push_to_buffer(source, width, Alignment::Right, Symbol::Four, &mut buffer);
+        let expected = String::from("444abc");
+        assert_eq!(expected, buffer);
+    }
+
+    #[test]
+    fn pad_four_from_byte() {
+        let width: usize = 4;
+        let source = Vec::from(&[1u8, 2]);
+        let mut buffer: Vec<u8> = Vec::with_capacity(width);
+        pad_and_push_to_buffer(source, width, Alignment::Center, Symbol::Four, &mut buffer);
+        let expected: Vec<u8> = Vec::from(&[Symbol::Four.into(), 1, 2, Symbol::Four.into()]);
+        assert_eq!(expected, buffer);
+    }
+
+    #[test]
+    fn pad_five_from_char_slice() {
         let width: usize = 4;
         let source: &[char] = &['a', 'b', 'c'];
         let mut buffer: Vec<char> = Vec::with_capacity(width);
         pad_and_push_to_buffer(source, width, Alignment::Center, Symbol::Five, &mut buffer);
         let expected = Vec::from(&['a', 'b', 'c', '5']);
+        assert_eq!(expected, buffer);
+    }
+
+    #[test]
+    fn pad_five_from_byte_slice() {
+        let width: usize = 4;
+        let source: &[u8] = &[1u8, 2, 3];
+        let mut buffer: Vec<u8> = Vec::with_capacity(width);
+        pad_and_push_to_buffer(source, width, Alignment::Center, Symbol::Five, &mut buffer);
+        let expected = Vec::from(&[1u8, 2, 3, Symbol::Five.into()]);
+        assert_eq!(expected, buffer);
+    }
+
+    #[test]
+    fn pad_five_from_char() {
+        let width: usize = 6;
+        let source: &str = "abc";
+        let mut buffer = String::new();
+        pad_and_push_to_buffer(source, width, Alignment::Right, Symbol::Five, &mut buffer);
+        let expected = String::from("555abc");
+        assert_eq!(expected, buffer);
+    }
+
+    #[test]
+    fn pad_five_from_byte() {
+        let width: usize = 4;
+        let source = Vec::from(&[1u8, 2]);
+        let mut buffer: Vec<u8> = Vec::with_capacity(width);
+        pad_and_push_to_buffer(source, width, Alignment::Center, Symbol::Five, &mut buffer);
+        let expected: Vec<u8> = Vec::from(&[Symbol::Five.into(), 1, 2, Symbol::Five.into()]);
+        assert_eq!(expected, buffer);
+    }
+
+    #[test]
+    fn pad_six_from_char_slice() {
+        let width: usize = 4;
+        let source: &[char] = &['a', 'b', 'c'];
+        let mut buffer: Vec<char> = Vec::with_capacity(width);
+        pad_and_push_to_buffer(source, width, Alignment::Center, Symbol::Six, &mut buffer);
+        let expected = Vec::from(&['a', 'b', 'c', '6']);
+        assert_eq!(expected, buffer);
+    }
+
+    #[test]
+    fn pad_six_from_byte_slice() {
+        let width: usize = 4;
+        let source: &[u8] = &[1u8, 2, 3];
+        let mut buffer: Vec<u8> = Vec::with_capacity(width);
+        pad_and_push_to_buffer(source, width, Alignment::Center, Symbol::Six, &mut buffer);
+        let expected = Vec::from(&[1u8, 2, 3, Symbol::Six.into()]);
+        assert_eq!(expected, buffer);
+    }
+
+    #[test]
+    fn pad_six_from_char() {
+        let width: usize = 6;
+        let source: &str = "abc";
+        let mut buffer = String::new();
+        pad_and_push_to_buffer(source, width, Alignment::Right, Symbol::Six, &mut buffer);
+        let expected = String::from("666abc");
+        assert_eq!(expected, buffer);
+    }
+
+    #[test]
+    fn pad_six_from_byte() {
+        let width: usize = 4;
+        let source = Vec::from(&[1u8, 2]);
+        let mut buffer: Vec<u8> = Vec::with_capacity(width);
+        pad_and_push_to_buffer(source, width, Alignment::Center, Symbol::Six, &mut buffer);
+        let expected: Vec<u8> = Vec::from(&[Symbol::Six.into(), 1, 2, Symbol::Six.into()]);
+        assert_eq!(expected, buffer);
+    }
+
+    #[test]
+    fn pad_seven_from_char_slice() {
+        let width: usize = 4;
+        let source: &[char] = &['a', 'b', 'c'];
+        let mut buffer: Vec<char> = Vec::with_capacity(width);
+        pad_and_push_to_buffer(source, width, Alignment::Center, Symbol::Seven, &mut buffer);
+        let expected = Vec::from(&['a', 'b', 'c', '7']);
+        assert_eq!(expected, buffer);
+    }
+
+    #[test]
+    fn pad_seven_from_byte_slice() {
+        let width: usize = 4;
+        let source: &[u8] = &[1u8, 2, 3];
+        let mut buffer: Vec<u8> = Vec::with_capacity(width);
+        pad_and_push_to_buffer(source, width, Alignment::Center, Symbol::Seven, &mut buffer);
+        let expected = Vec::from(&[1u8, 2, 3, Symbol::Seven.into()]);
+        assert_eq!(expected, buffer);
+    }
+
+    #[test]
+    fn pad_seven_from_char() {
+        let width: usize = 6;
+        let source: &str = "abc";
+        let mut buffer = String::new();
+        pad_and_push_to_buffer(source, width, Alignment::Right, Symbol::Seven, &mut buffer);
+        let expected = String::from("777abc");
+        assert_eq!(expected, buffer);
+    }
+
+    #[test]
+    fn pad_seven_from_byte() {
+        let width: usize = 4;
+        let source = Vec::from(&[1u8, 2]);
+        let mut buffer: Vec<u8> = Vec::with_capacity(width);
+        pad_and_push_to_buffer(source, width, Alignment::Center, Symbol::Seven, &mut buffer);
+        let expected: Vec<u8> = Vec::from(&[Symbol::Seven.into(), 1, 2, Symbol::Seven.into()]);
+        assert_eq!(expected, buffer);
+    }
+
+    #[test]
+    fn pad_eight_from_char_slice() {
+        let width: usize = 4;
+        let source: &[char] = &['a', 'b', 'c'];
+        let mut buffer: Vec<char> = Vec::with_capacity(width);
+        pad_and_push_to_buffer(source, width, Alignment::Center, Symbol::Eight, &mut buffer);
+        let expected = Vec::from(&['a', 'b', 'c', '8']);
+        assert_eq!(expected, buffer);
+    }
+
+    #[test]
+    fn pad_eight_from_byte_slice() {
+        let width: usize = 4;
+        let source: &[u8] = &[1u8, 2, 3];
+        let mut buffer: Vec<u8> = Vec::with_capacity(width);
+        pad_and_push_to_buffer(source, width, Alignment::Center, Symbol::Eight, &mut buffer);
+        let expected = Vec::from(&[1u8, 2, 3, Symbol::Eight.into()]);
+        assert_eq!(expected, buffer);
+    }
+
+    #[test]
+    fn pad_eight_from_char() {
+        let width: usize = 6;
+        let source: &str = "abc";
+        let mut buffer = String::new();
+        pad_and_push_to_buffer(source, width, Alignment::Right, Symbol::Eight, &mut buffer);
+        let expected = String::from("888abc");
+        assert_eq!(expected, buffer);
+    }
+
+    #[test]
+    fn pad_eight_from_byte() {
+        let width: usize = 4;
+        let source = Vec::from(&[1u8, 2]);
+        let mut buffer: Vec<u8> = Vec::with_capacity(width);
+        pad_and_push_to_buffer(source, width, Alignment::Center, Symbol::Eight, &mut buffer);
+        let expected: Vec<u8> = Vec::from(&[Symbol::Eight.into(), 1, 2, Symbol::Eight.into()]);
+        assert_eq!(expected, buffer);
+    }
+
+    #[test]
+    fn pad_nine_from_char_slice() {
+        let width: usize = 4;
+        let source: &[char] = &['a', 'b', 'c'];
+        let mut buffer: Vec<char> = Vec::with_capacity(width);
+        pad_and_push_to_buffer(source, width, Alignment::Center, Symbol::Nine, &mut buffer);
+        let expected = Vec::from(&['a', 'b', 'c', '9']);
+        assert_eq!(expected, buffer);
+    }
+
+    #[test]
+    fn pad_nine_from_byte_slice() {
+        let width: usize = 4;
+        let source: &[u8] = &[1u8, 2, 3];
+        let mut buffer: Vec<u8> = Vec::with_capacity(width);
+        pad_and_push_to_buffer(source, width, Alignment::Center, Symbol::Nine, &mut buffer);
+        let expected = Vec::from(&[1u8, 2, 3, Symbol::Nine.into()]);
+        assert_eq!(expected, buffer);
+    }
+
+    #[test]
+    fn pad_nine_from_char() {
+        let width: usize = 6;
+        let source: &str = "abc";
+        let mut buffer = String::new();
+        pad_and_push_to_buffer(source, width, Alignment::Right, Symbol::Nine, &mut buffer);
+        let expected = String::from("999abc");
+        assert_eq!(expected, buffer);
+    }
+
+    #[test]
+    fn pad_nine_from_byte() {
+        let width: usize = 4;
+        let source = Vec::from(&[1u8, 2]);
+        let mut buffer: Vec<u8> = Vec::with_capacity(width);
+        pad_and_push_to_buffer(source, width, Alignment::Center, Symbol::Nine, &mut buffer);
+        let expected: Vec<u8> = Vec::from(&[Symbol::Nine.into(), 1, 2, Symbol::Nine.into()]);
+        assert_eq!(expected, buffer);
+    }
+
+    #[test]
+    fn pad_hyphen_from_byte() {
+        let width: usize = 3;
+        let source = Vec::from(&[1u8, 2]);
+        let mut buffer: Vec<u8> = Vec::with_capacity(width);
+        pad_and_push_to_buffer(source, width, Alignment::Left, Symbol::Hyphen, &mut buffer);
+        let expected: Vec<u8> = Vec::from(&[1, 2, Symbol::Hyphen.into()]);
+        assert_eq!(expected, buffer);
+    }
+
+    #[test]
+    fn pad_whitespace_from_byte() {
+        let width: usize = 3;
+        let source = Vec::from(&[1u8, 2]);
+        let mut buffer: Vec<u8> = Vec::with_capacity(width);
+        pad_and_push_to_buffer(
+            source,
+            width,
+            Alignment::Left,
+            Symbol::Whitespace,
+            &mut buffer,
+        );
+        let expected: Vec<u8> = Vec::from(&[1, 2, Symbol::Whitespace.into()]);
+        assert_eq!(expected, buffer);
+    }
+
+    #[test]
+    fn pad_zero_from_byte() {
+        let width: usize = 3;
+        let source = Vec::from(&[1u8, 2]);
+        let mut buffer: Vec<u8> = Vec::with_capacity(width);
+        pad_and_push_to_buffer(source, width, Alignment::Left, Symbol::Zero, &mut buffer);
+        let expected: Vec<u8> = Vec::from(&[1, 2, Symbol::Zero.into()]);
         assert_eq!(expected, buffer);
     }
 
