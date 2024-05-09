@@ -22,7 +22,7 @@
 * SOFTWARE.
 *
 * File created: 2023-12-14
-* Last updated: 2024-05-05
+* Last updated: 2024-05-09
 */
 
 ///
@@ -46,17 +46,24 @@
 /// let output: String = "abc".pad(6, Alignment::Left, Symbol::Whitespace);
 /// ```
 ///
+
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
+
 use std::clone;
 use std::fmt;
 
 /// Exhaustive enum for the alternative ways to pad and format data.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Default, Clone, Copy, PartialEq)]
+#[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
 pub enum Alignment {
     Left,
+    #[default]
     Right,
     Center,
 }
 
+///
 impl Alignment {
     /// Get amount of chars to pad on either side of the [`Source`].
     pub fn left_right_padding(&self, diff: usize) -> (usize, usize) {
@@ -69,11 +76,31 @@ impl Alignment {
 }
 
 /// Exhaustive enum for the supported padding symbols.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Default, Clone, Copy, PartialEq)]
+#[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
 pub enum Symbol {
+    Hyphen,
+    Underscore,
+    Dot,
+    Comma,
+    Colon,
+    Semicolon,
+    Hashtag,
+    Backslash,
+    Forwardslash,
+    Asterisk,
+    #[default]
     Whitespace,
     Zero,
-    Hyphen,
+    One,
+    Two,
+    Three,
+    Four,
+    Five,
+    Six,
+    Seven,
+    Eight,
+    Nine,
 }
 
 /// Convert the [`Symbol`] enum into its character representation.
@@ -82,8 +109,26 @@ impl From<Symbol> for char {
     fn from(symbol: Symbol) -> Self {
         match symbol {
             Symbol::Hyphen => '-',
+            Symbol::Underscore => '_',
+            Symbol::Dot => '.',
+            Symbol::Comma => ',',
+            Symbol::Colon => ':',
+            Symbol::Semicolon => ';',
+            Symbol::Hashtag => '#',
+            Symbol::Backslash => '\\',
+            Symbol::Forwardslash => '/',
+            Symbol::Asterisk => '*',
             Symbol::Whitespace => ' ',
             Symbol::Zero => '0',
+            Symbol::One => '1',
+            Symbol::Two => '2',
+            Symbol::Three => '3',
+            Symbol::Four => '4',
+            Symbol::Five => '5',
+            Symbol::Six => '6',
+            Symbol::Seven => '7',
+            Symbol::Eight => '8',
+            Symbol::Nine => '9',
         }
     }
 }
@@ -94,8 +139,26 @@ impl From<Symbol> for &[char] {
     fn from(symbol: Symbol) -> Self {
         match symbol {
             Symbol::Hyphen => &['-'],
+            Symbol::Underscore => &['_'],
+            Symbol::Dot => &['.'],
+            Symbol::Comma => &[','],
+            Symbol::Colon => &[':'],
+            Symbol::Semicolon => &[';'],
+            Symbol::Hashtag => &['#'],
+            Symbol::Backslash => &['\\'],
+            Symbol::Forwardslash => &['/'],
+            Symbol::Asterisk => &['*'],
             Symbol::Whitespace => &[' '],
             Symbol::Zero => &['0'],
+            Symbol::One => &['1'],
+            Symbol::Two => &['2'],
+            Symbol::Three => &['3'],
+            Symbol::Four => &['4'],
+            Symbol::Five => &['5'],
+            Symbol::Six => &['6'],
+            Symbol::Seven => &['7'],
+            Symbol::Eight => &['8'],
+            Symbol::Nine => &['9'],
         }
     }
 }
@@ -106,8 +169,26 @@ impl From<Symbol> for u8 {
     fn from(symbol: Symbol) -> Self {
         match symbol {
             Symbol::Hyphen => b'-',
+            Symbol::Underscore => b'_',
+            Symbol::Dot => b'.',
+            Symbol::Comma => b',',
+            Symbol::Colon => b':',
+            Symbol::Semicolon => b';',
+            Symbol::Hashtag => b'#',
+            Symbol::Backslash => b'\\',
+            Symbol::Forwardslash => b'/',
+            Symbol::Asterisk => b'*',
             Symbol::Whitespace => b' ',
             Symbol::Zero => b'0',
+            Symbol::One => b'1',
+            Symbol::Two => b'2',
+            Symbol::Three => b'3',
+            Symbol::Four => b'4',
+            Symbol::Five => b'5',
+            Symbol::Six => b'6',
+            Symbol::Seven => b'7',
+            Symbol::Eight => b'8',
+            Symbol::Nine => b'9',
         }
     }
 }
@@ -118,8 +199,26 @@ impl From<Symbol> for &[u8] {
     fn from(symbol: Symbol) -> Self {
         match symbol {
             Symbol::Hyphen => "-".as_bytes(),
+            Symbol::Underscore => "_".as_bytes(),
+            Symbol::Dot => ".".as_bytes(),
+            Symbol::Comma => ",".as_bytes(),
+            Symbol::Colon => ":".as_bytes(),
+            Symbol::Semicolon => ";".as_bytes(),
+            Symbol::Hashtag => "#".as_bytes(),
+            Symbol::Backslash => "\\".as_bytes(),
+            Symbol::Forwardslash => "/".as_bytes(),
+            Symbol::Asterisk => "*".as_bytes(),
             Symbol::Whitespace => " ".as_bytes(),
             Symbol::Zero => "0".as_bytes(),
+            Symbol::One => "1".as_bytes(),
+            Symbol::Two => "2".as_bytes(),
+            Symbol::Three => "3".as_bytes(),
+            Symbol::Four => "4".as_bytes(),
+            Symbol::Five => "5".as_bytes(),
+            Symbol::Six => "6".as_bytes(),
+            Symbol::Seven => "7".as_bytes(),
+            Symbol::Eight => "8".as_bytes(),
+            Symbol::Nine => "9".as_bytes(),
         }
     }
 }
@@ -659,6 +758,46 @@ mod tests {
     fn vec_no_pad_required() {
         let output = vec![100u8, 14, 15, 98].pad(4, Alignment::Center, Symbol::Hyphen);
         let expected = vec![100u8, 14, 15, 98];
+        assert_eq!(expected, output);
+    }
+
+    #[test]
+    fn default_alignment() {
+        let expected = Alignment::Right;
+        let default = Alignment::default();
+        assert_eq!(expected, default);
+    }
+
+    #[test]
+    fn default_symbol() {
+        let expected = Symbol::Whitespace;
+        let default = Symbol::default();
+        assert_eq!(expected, default);
+    }
+
+    #[cfg(feature = "serde")]
+    #[derive(Debug, Deserialize, PartialEq)]
+    struct DummyAlignment { alignment: Alignment }
+
+    #[cfg(feature = "serde")]
+    #[test]
+    fn deserialize_alignment() {
+        let json = r#"{"alignment": "Right"}"#;
+        let output: DummyAlignment = serde_json::from_str(json).unwrap();
+        let expected = DummyAlignment { alignment: Alignment::Right };
+        assert_eq!(expected, output);
+    }
+
+    #[cfg(feature = "serde")]
+    #[derive(Debug, Deserialize, PartialEq)]
+    struct DummySymbol { symbol: Symbol }
+
+    #[cfg(feature = "serde")]
+    #[test]
+    fn deserialize_symbol() {
+        let json = r#"{"symbol": "Whitespace"}"#;
+        let output: DummySymbol = serde_json::from_str(json).unwrap();
+        let expected = DummySymbol { symbol: Symbol::Whitespace };
         assert_eq!(expected, output);
     }
 }
