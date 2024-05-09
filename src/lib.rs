@@ -777,27 +777,35 @@ mod tests {
 
     #[cfg(feature = "serde")]
     #[derive(Debug, Deserialize, PartialEq)]
-    struct DummyAlignment { alignment: Alignment }
+    struct DummyAlignment {
+        alignment: Alignment,
+    }
 
     #[cfg(feature = "serde")]
     #[test]
     fn deserialize_alignment() {
         let json = r#"{"alignment": "Right"}"#;
         let output: DummyAlignment = serde_json::from_str(json).unwrap();
-        let expected = DummyAlignment { alignment: Alignment::Right };
+        let expected = DummyAlignment {
+            alignment: Alignment::Right,
+        };
         assert_eq!(expected, output);
     }
 
     #[cfg(feature = "serde")]
     #[derive(Debug, Deserialize, PartialEq)]
-    struct DummySymbol { symbol: Symbol }
+    struct DummySymbol {
+        symbol: Symbol,
+    }
 
     #[cfg(feature = "serde")]
     #[test]
     fn deserialize_symbol() {
         let json = r#"{"symbol": "Whitespace"}"#;
         let output: DummySymbol = serde_json::from_str(json).unwrap();
-        let expected = DummySymbol { symbol: Symbol::Whitespace };
+        let expected = DummySymbol {
+            symbol: Symbol::Whitespace,
+        };
         assert_eq!(expected, output);
     }
 }
