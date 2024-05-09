@@ -1,51 +1,98 @@
-/*
-* MIT License
-*
-* Copyright (c) 2024 Firelink Data
-*
-* Permission is hereby granted, free of charge, to any person obtaining a copy
-* of this software and associated documentation files (the "Software"), to deal
-* in the Software without restriction, including without limitation the rights
-* to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-* copies of the Software, and to permit persons to whom the Software is
-* furnished to do so, subject to the following conditions:
-*
-* The above copyright notice and this permission notice shall be included in all
-* copies or substantial portions of the Software.
-*
-* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-* IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-* FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-* AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-* LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-* OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-* SOFTWARE.
-*
-* File created: 2023-12-14
-* Last updated: 2024-05-09
-*/
+//
+// MIT License
+//
+// Copyright (c) 2024 Firelink Data
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+//
+// File created: 2023-12-14
+// Last updated: 2024-05-10
+//
 
-///
-/// Highly efficient data and string formatting library for Rust.
-///
-/// Pad and format string slices and generic vectors efficiently with minimal memory
-/// allocation. This crate has guaranteed performance improvements over the standard
-/// library [`format!`] macro.
-///
-/// # Examples
-///
-/// Given the below string slice and target pad width 6, with [`Alignment::Left`] and
-/// [`PadSymbol::Whitespace`], the resulting output String can be seen on the right:
-///
-/// +---+---+---+        +---+---+---+---+---+---+
-/// | a | b | c |   -->  | a | b | c |   |   |   |
-/// +---+---+---+        +---+---+---+---+---+---+
-///
-/// ```
-/// use padder::*;
-/// let output: String = "abc".pad(6, Alignment::Left, Symbol::Whitespace);
-/// ```
-///
+//!
+//! Highly efficient data and string formatting library for Rust.
+//!
+//! Pad and format virtually any generic slice or vector efficiently with minimal memory
+//! overhead. This crate has guaranteed performance improvements over the standard
+//! library [`format!`] macro. Clone this repository and run cargo bench to see benchmark
+//! comparisons between this implementation and the standard library.
+//!
+//! The library defines a core trait called [`Source`] which enables efficient padding on
+//! the type. It is currently implemented on three main types of datastructures:
+//!  - the string slice `&str`,
+//!  - the generic slice `&[T]`,
+//!  - and the generic vector `Vec<T>,
+//!
+//! Note that the type T has to adhere to the trait bound `T: From<Symbol>`, where [`Symbol`]
+//! is the Enum representing the available characters to pad and format with. If you want to
+//! extend the padding capabilities of the [`Source`] trait with your own type T, then you
+//! need to also implement the [`From<Symbol>`] trait for your type T.
+//!
+//! # Examples
+//!
+//! Given the below string slice and target pad width 6, with [`Alignment::Left`] and
+//! [`Symbol::Whitespace`], the resulting output String can be seen on the right:
+//!
+//! +---+---+---+       +---+---+---+---+---+---+
+//! | a | b | c |  -->  | a | b | c |   |   |   |
+//! +---+---+---+       +---+---+---+---+---+---+
+//!
+//! ```
+//! use padder::*;
+//!
+//! let output: String = "abc".pad(6, Alignment::Left, Symbol::Whitespace);
+//! let expected = String::from("abc   ");
+//! assert_eq!(expected, output);
+//! ```
+//!
+//! You can also pad to an existing buffer, providing you precise control over any memory
+//! allocations performed in your program. Given the below char slice and target pad 
+//! width 10, with [`Alignment::Right`] and [`Symbol::Hashtag`], the resulting contents
+//! of the allocated buffer can be seen on the right:
+//!
+//! +---+---+---+       +---+---+---+---+---+---+---+---+---+---+
+//! | a | b | c |  -->  | # | # | # | # | # | # | # | a | b | c |
+//! +---+---+---+       +---+---+---+---+---+---+---+---+---+---+
+//!
+//! ```
+//! use padder::*;
+//!
+//! let width: usize = 10;
+//! let source: &[char] = &['a', 'b', 'c'];
+//!
+//! let mut buffer: Vec<char> = Vec::with_capacity(width);
+//! pad_and_push_to_buffer(
+//!     source,
+//!     width,
+//!     Alignment::Right,
+//!     Symbol::Hashtag,
+//!     &mut buffer,
+//! );
+//!
+//! let mut expected = vec!['#'; 7];
+//! expected.extend_from_slice(source);
+//! assert_eq!(expected, buffer);
+//! ```
+//!
+//! For more inspiration and guidance on how to use this crate and its trait, please refer
+//! to the examples of the README in the project repository.
+//!
 
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
