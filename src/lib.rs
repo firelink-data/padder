@@ -484,7 +484,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn pad_underscore_from_char() {
+    fn pad_underscore_from_char_slice() {
         let width: usize = 4;
         let source: &[char] = &['a', 'b', 'c'];
         let mut buffer: Vec<char> = Vec::with_capacity(width);
@@ -494,12 +494,32 @@ mod tests {
     }
 
     #[test]
-    fn pad_underscore_from_byte() {
+    fn pad_underscore_from_byte_slice() {
         let width: usize = 4;
         let source: &[u8] = &[1u8, 2, 3];
         let mut buffer: Vec<u8> = Vec::with_capacity(width);
         pad_and_push_to_buffer(source, width, Alignment::Center, Symbol::Underscore, &mut buffer);
         let expected = Vec::from(&[1u8, 2, 3, Symbol::Underscore.into()]);
+        assert_eq!(expected, buffer);
+    }
+
+    #[test]
+    fn pad_underscore_from_char() {
+        let width: usize = 4;
+        let source: &str = "abc";
+        let mut buffer = String::new();
+        pad_and_push_to_buffer(source, width, Alignment::Center, Symbol::Underscore, &mut buffer);
+        let expected = String::from("abc_");
+        assert_eq!(expected, buffer);
+    }
+
+    #[test]
+    fn pad_underscore_from_byte() {
+        let width: usize = 4;
+        let source = Vec::from(&[1u8, 2]);
+        let mut buffer: Vec<u8> = Vec::with_capacity(width);
+        pad_and_push_to_buffer(source, width, Alignment::Center, Symbol::Underscore, &mut buffer);
+        let expected: Vec<u8> = Vec::from(&[Symbol::Underscore.into(), 1, 2, Symbol::Underscore.into()]);
         assert_eq!(expected, buffer);
     }
 
